@@ -8,10 +8,6 @@ permissions:
   contents: write
   issues: write
 
-concurrency:
-  group: shared-qubit
-  cancel-in-progress: false
-
 jobs:
   apply:
     if: startsWith(github.event.issue.title, 'qubit:')
@@ -19,36 +15,53 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          # queued runs must start from the latest state, not the commit at issue time
           ref: ${{ github.event.repository.default_branch }}
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Apply gate
+      # No concurrency group: GitHub keeps only one pending run per group and
+      # cancels the rest, which would drop moves when several people click at
+      # once. Instead each run applies its gate to the latest state and, if
+      # another run pushed first, starts over from the new state.
+      - name: Apply gate and push
         id: qubit
         env:
           TITLE: ${{ github.event.issue.title }}
           ACTOR: ${{ github.event.issue.user.login }}
-        run: python scripts/qubit.py
-
-      - name: Commit
-        if: steps.qubit.outputs.changed == 'true'
-        env:
-          OP: ${{ steps.qubit.outputs.op }}
-          ACTOR: ${{ github.event.issue.user.login }}
+          BRANCH: ${{ github.event.repository.default_branch }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add README.md state assets
-          git commit -m "qubit: $OP by @$ACTOR"
-          git push
+          for attempt in 1 2 3 4 5 6; do
+            git fetch -q origin "$BRANCH"
+            git reset -q --hard "origin/$BRANCH"
+            : > "$GITHUB_OUTPUT.try"
+            GITHUB_OUTPUT="$GITHUB_OUTPUT.try" python scripts/qubit.py
+            if ! grep -q '^changed=true' "$GITHUB_OUTPUT.try"; then
+              cat "$GITHUB_OUTPUT.try" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            OP=$(sed -n 's/^op=//p' "$GITHUB_OUTPUT.try")
+            git add -A README.md state assets
+            git commit -q -m "qubit: $OP by @$ACTOR"
+            if git push -q origin "HEAD:$BRANCH"; then
+              cat "$GITHUB_OUTPUT.try" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            sleep $((attempt * 2 + RANDOM % 3))
+          done
+          echo "Could not push after 6 attempts" >&2
+          echo "The qubit was busy and this move could not be saved. Please try again in a minute." > msg.txt
+          exit 1
 
       - name: Reply and close
+        if: always()
         env:
           GH_TOKEN: ${{ github.token }}
           NUM: ${{ github.event.issue.number }}
         run: |
+          [ -s msg.txt ] || echo "Something went wrong applying this move. Please try again." > msg.txt
           gh issue comment "$NUM" --repo "$GITHUB_REPOSITORY" --body-file msg.txt
           gh issue close "$NUM" --repo "$GITHUB_REPOSITORY"
