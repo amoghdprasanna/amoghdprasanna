@@ -18,7 +18,7 @@ This page is not a résumé. It says why each repository here exists: the questi
 **Can a quantum circuit learn how quarks become hadrons?**<br>
 <sub>`qml_hadronization` &nbsp;·&nbsp; private group repo, write-up in progress &nbsp;·&nbsp; Qiskit, JAX, Pythia 8</sub>
 
-There is no first-principles calculation of hadronization, so event generators like Pythia fit a phenomenological string model instead. I train quantum circuit Born machines on Pythia 8 momentum distributions and check what survives once IBM's noise model is switched on. The lesson so far is that on noisy hardware the budget is two-qubit gates, not depth: my best circuit under FakeBrisbane noise uses only 32 native ECR gates.
+There is no first-principles calculation of hadronization, so event generators like Pythia fit a phenomenological Lund string model instead. I train quantum circuit Born machines on Pythia 8 momentum distributions and check what survives once IBM's noise model is switched on. The lesson so far is that on noisy hardware the budget is two-qubit gates, not depth: my best circuit under FakeBrisbane noise uses only 32 native ECR gates.
 
 **Can I ask about *this* equation without leaving the page?**<br>
 <sub>[`marginalia`](https://github.com/amoghdprasanna/marginalia) &nbsp;·&nbsp; Python, Qt, Claude API</sub>
