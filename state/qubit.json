@@ -1,23 +1,22 @@
 {
   "psi": [
     [
-      0.0,
+      1.0,
       0.0
     ],
     [
-      1.0,
+      0.0,
       0.0
     ]
   ],
-  "ops": [
-    "H",
-    "M=1"
-  ],
-  "gates": 2,
+  "ops": [],
+  "gates": 3,
   "zeros": 0,
   "ones": 1,
   "last": {
-    "op": "M=1",
-    "user": "amoghdprasanna"
-  }
+    "op": "reset",
+    "user": "amoghdprasanna",
+    "at": "2026-10-07T23:01Z"
+  },
+  "trail": []
 }
