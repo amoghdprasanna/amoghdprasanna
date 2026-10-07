@@ -40,8 +40,6 @@ A course project that takes a plain inventory app through misuse cases and STRID
 
 TAK's stock CoT injector only scatters static markers. I added a simulated GPS unit that drives line, circle and square paths at a set speed and is sent through ATAK's internal dispatcher, so the map treats it like a real GPS-reported friendly unit and draws its trace.
 
-<sub>Also here: [`Auto-Apply`](https://github.com/amoghdprasanna/Auto-Apply) is a friend's tool where I fixed what broke when I used it. [`qiskit4qml`](https://github.com/amoghdprasanna/qiskit4qml) is an unchanged fork of Qiskit kept for reference, and [`pennylane_2_qiskit`](https://github.com/amoghdprasanna/pennylane_2_qiskit) is a placeholder for moving PennyLane circuits to Qiskit.</sub>
-
 <br>
 
 <picture><source media="(prefers-color-scheme: dark)" srcset="assets/hdr-now-dark.svg"><img src="assets/hdr-now-light.svg" alt="02. Open questions" width="100%" height="44"></picture>
