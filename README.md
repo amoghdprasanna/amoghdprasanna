@@ -21,19 +21,19 @@ Building an open-source decoding toolkit for simulating and decoding topological
 
 <!-- QUBIT:START -->
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/qubit-dark.svg?v=0">
-  <img src="assets/qubit-light.svg?v=0" alt="Bloch sphere of the shared qubit" width="220" align="right">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/qubit-dark.svg?v=1">
+  <img src="assets/qubit-light.svg?v=1" alt="Bloch sphere of the shared qubit" width="220" align="right">
 </picture>
 
 **A shared qubit.** Everyone who visits acts on the same one. Pick a gate:
 
 [`H`](https://github.com/amoghdprasanna/amoghdprasanna/issues/new?title=qubit%3A+H&body=Just+press+Submit.+The+gate+is+applied+within+a+minute.) &nbsp; [`X`](https://github.com/amoghdprasanna/amoghdprasanna/issues/new?title=qubit%3A+X&body=Just+press+Submit.+The+gate+is+applied+within+a+minute.) &nbsp; [`Y`](https://github.com/amoghdprasanna/amoghdprasanna/issues/new?title=qubit%3A+Y&body=Just+press+Submit.+The+gate+is+applied+within+a+minute.) &nbsp; [`Z`](https://github.com/amoghdprasanna/amoghdprasanna/issues/new?title=qubit%3A+Z&body=Just+press+Submit.+The+gate+is+applied+within+a+minute.) &nbsp; [`S`](https://github.com/amoghdprasanna/amoghdprasanna/issues/new?title=qubit%3A+S&body=Just+press+Submit.+The+gate+is+applied+within+a+minute.) &nbsp; [`T`](https://github.com/amoghdprasanna/amoghdprasanna/issues/new?title=qubit%3A+T&body=Just+press+Submit.+The+gate+is+applied+within+a+minute.) &nbsp; [`measure`](https://github.com/amoghdprasanna/amoghdprasanna/issues/new?title=qubit%3A+measure&body=Just+press+Submit.+The+gate+is+applied+within+a+minute.) &nbsp; [`reset`](https://github.com/amoghdprasanna/amoghdprasanna/issues/new?title=qubit%3A+reset&body=Just+press+Submit.+The+gate+is+applied+within+a+minute.)
 
-`|ψ⟩ = |0⟩`
+`|ψ⟩ = 0.707|0⟩ + 0.707|1⟩`
 
-`|0⟩ ─ …`
+`|0⟩ ─H─ …`
 
-<sub>No one has touched it yet. 0 operations so far, 0 measurements (0 × 0, 0 × 1).</sub>
+<sub>Last move: `H` by [@amoghdprasanna](https://github.com/amoghdprasanna). 1 operation so far, 0 measurements (0 × 0, 0 × 1).</sub>
 
 <br clear="right">
 <!-- QUBIT:END -->
