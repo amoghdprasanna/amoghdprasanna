@@ -41,7 +41,7 @@ def banner_text(mode):
         T.text(handle, "mono", 13, 64, 104, th["mute"], tracking=0.06),
         f'<circle cx="{64 + T.measure(handle, "mono", 13, 0.06) + 12:.1f}" cy="99.5" r="3" fill="{th["accent"]}"/>',
         T.text("Amogh D. Prasanna", "inter-display-light", 54, 61, 180, th["fg"], tracking=-0.015),
-        T.text("quantum compilation · error correction · generative QML", "mono", 14, 64, 226, th["fg"], tracking=0.02),
+        T.text("quantum compilation · error correction · quantum simulation", "mono", 14, 64, 226, th["fg"], tracking=0.02),
         T.text("UMD  /  FERMILAB SQMS", "mono", 11.5, 64, 264, th["mute"], tracking=0.14),
     ])
 
