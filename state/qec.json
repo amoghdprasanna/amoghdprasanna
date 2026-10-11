@@ -1,17 +1,28 @@
 {
-  "x": [
-    10
-  ],
-  "z": [
-    22
-  ],
-  "moves": 5,
-  "decodes": 1,
+  "x": [],
+  "z": [],
+  "moves": 6,
+  "decodes": 2,
   "failures": 0,
   "last": {
-    "op": "X",
+    "op": "decode",
     "user": "amoghdprasanna",
-    "at": "2026-10-11T20:49Z"
+    "at": "2026-10-11T20:55Z"
   },
-  "result": null
+  "result": {
+    "ex": [
+      10
+    ],
+    "ez": [
+      22
+    ],
+    "cx": [
+      10
+    ],
+    "cz": [
+      22
+    ],
+    "logical": ""
+  },
+  "recent": null
 }
