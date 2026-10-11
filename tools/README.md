@@ -7,14 +7,15 @@ searchable and reflows on a phone.
 
 | Path | What it is | Made by |
 | --- | --- | --- |
-| `assets/qec/banner-N-*.svg` | The header: name and the shared d = 5 surface code | `scripts/qec.py`, on every move |
+| `assets/qec/banner-N-*.svg` | The header: name and the shared d = 5 surface code, wide and (`-mobile`) tall | `scripts/qec.py`, on every move |
 | `assets/hdr-*.svg` | Section headers | `tools/build.py` |
 | `assets/btn-*.svg` | Link buttons and the surface code's controls | `tools/build.py` |
 | `scripts/glyphs.json` | Monospace glyph outlines the bots use | `tools/build.py` |
 | `scripts/banner_text.json` | The header's name block, pasted in by `scripts/qec.py` | `tools/build.py` |
 
 Each image comes in a `-dark` and a `-light` version, and the README picks one
-with `<picture>` and `prefers-color-scheme`. Colours live in `scripts/theme.py`.
+with `<picture>` and `prefers-color-scheme`. The header also has a tall `-mobile`
+layout with larger type, picked on screens up to 600 px wide. Colours live in `scripts/theme.py`.
 
 ## Rebuilding the static images
 

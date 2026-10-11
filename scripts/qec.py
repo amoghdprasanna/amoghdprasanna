@@ -18,6 +18,7 @@ import os
 import random
 import re
 import sys
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from itertools import combinations
 from pathlib import Path
@@ -36,9 +37,6 @@ rng = random.SystemRandom()
 
 D = 5
 N = D * D
-W, H = 1280, 360
-P = 40
-CX, CY = 1030, 178
 TILES = {
     "dark": {"x": "#16161b", "z": "#0b0b0d", "edge": "#26262b"},
     "light": {"x": "#ebebf0", "z": "#f6f6f8", "edge": "#dcdce2"},
@@ -146,15 +144,41 @@ def toggle(lst, q):
 
 # ---------------------------------------------------------------- drawing
 
-def pos(q):
+@dataclass(frozen=True)
+class Layout:
+    """Where things go. Desktop is wide; on a phone a wide header shrinks to a
+    quarter of its size, so there is a tall layout with larger type as well."""
+    suffix: str
+    W: int
+    H: int
+    P: float          # pitch between data qubits
+    CX: float         # centre of the patch
+    CY: float
+    label: tuple      # (font size, x, y, anchor) of the code's name
+    size: float       # status text
+    rows: tuple       # baselines of the status rows
+    x: float          # status rows: x and anchor
+    anchor: str
+
+    @property
+    def k(self):  # marks scale with the pitch
+        return self.P / 40
+
+
+DESKTOP = Layout("", 1280, 368, 40, 1030, 180, (13, 1216, 54, "end"), 15, (306, 336), 1216, "end")
+MOBILE = Layout("-mobile", 720, 1040, 72, 360, 676, (19, 360, 470, "middle"), 21, (918, 956, 994), 360, "middle")
+LAYOUTS = (DESKTOP, MOBILE)
+
+
+def pos(L, q):
     i, j = q % D, q // D
-    return CX + (i - (D - 1) / 2) * P, CY + (j - (D - 1) / 2) * P
+    return L.CX + (i - (D - 1) / 2) * L.P, L.CY + (j - (D - 1) / 2) * L.P
 
 
-def shape(spec):
+def shape(L, spec):
     kind, i, j = spec
-    x, y = pos(idx(i, j))
-    r = P / 2
+    x, y = pos(L, idx(i, j))
+    P, r = L.P, L.P / 2
     if kind == "sq":
         return f"M{x} {y}h{P}v{P}h{-P}Z"
     if kind == "top":
@@ -166,10 +190,10 @@ def shape(spec):
     return f"M{x} {y}A{r} {r} 0 0 1 {x} {y + P}Z"
 
 
-def center(spec):
+def center(L, spec):
     kind, i, j = spec
-    x, y = pos(idx(i, j))
-    r = P / 2
+    x, y = pos(L, idx(i, j))
+    r = L.P / 2
     return {"sq": (x + r, y + r), "top": (x + r, y - r / 2), "bottom": (x + r, y + r / 2),
             "left": (x - r / 2, y + r), "right": (x + r / 2, y + r)}[kind]
 
@@ -198,127 +222,147 @@ def lit_checks(x_errs, z_errs):
 DEMO = [idx(1, 2), idx(2, 2)]  # an X chain of two, whose ends light two Z stabilizers
 
 
-def errors_layer(th, xs, zs, child=""):
+def errors_layer(L, th, xs, zs, child=""):
     """X is a filled violet qubit, Z a violet ring, Y both."""
     def el(tag):
         return f"{tag}>{child}</circle>" if child else f"{tag}/>"
-    s = []
+    k, s = L.k, []
     for q in xs:
-        x, y = pos(q)
-        s.append(el(f'<circle cx="{x}" cy="{y}" r="4.6" fill="{th["accent"]}"'))
+        x, y = pos(L, q)
+        s.append(el(f'<circle cx="{x}" cy="{y}" r="{4.6 * k:.1f}" fill="{th["accent"]}"'))
     for q in zs:
-        x, y = pos(q)
-        s.append(el(f'<circle cx="{x}" cy="{y}" r="9.5" fill="none" stroke="{th["accent"]}" stroke-width="1.6"'))
+        x, y = pos(L, q)
+        s.append(el(f'<circle cx="{x}" cy="{y}" r="{9.5 * k:.1f}" fill="none" stroke="{th["accent"]}" stroke-width="{1.6 * k:.1f}"'))
     return s
 
 
-def demo(th):
-    dur = 9.0
+def demo(L, th):
+    dur, k = 9.0, L.k
     err, syn, match, fix, calm = 1.0, 2.0, 3.4, 5.0, 6.2
     s = []
     for st in lit_checks(DEMO, []):
-        s.append(f'<path d="{shape(st[2])}" fill="{th["accent"]}" opacity="0">'
+        s.append(f'<path d="{shape(L, st[2])}" fill="{th["accent"]}" opacity="0">'
                  f'{anim(dur, "0;0;0.55;0.55;0;0", (0, syn, syn + 0.3, fix + 0.4, fix + 0.9, dur))}</path>')
-    (x1, y1), (x2, y2) = (center(st[2]) for st in lit_checks(DEMO, []))
-    L = ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
-    s.append(f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" stroke="{th["accent"]}" stroke-width="1.6" '
-             f'stroke-linecap="round" stroke-dasharray="{L:.1f}" stroke-dashoffset="{L:.1f}" opacity="0">'
-             f'{anim(dur, f"{L:.1f};{L:.1f};0;0", (0, match, match + 0.7, dur), "stroke-dashoffset")}'
+    (x1, y1), (x2, y2) = (center(L, st[2]) for st in lit_checks(DEMO, []))
+    ln = ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
+    s.append(f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" stroke="{th["accent"]}" stroke-width="{1.6 * k:.1f}" '
+             f'stroke-linecap="round" stroke-dasharray="{ln:.1f}" stroke-dashoffset="{ln:.1f}" opacity="0">'
+             f'{anim(dur, f"{ln:.1f};{ln:.1f};0;0", (0, match, match + 0.7, dur), "stroke-dashoffset")}'
              f'{anim(dur, "0;0;1;1;0;0", (0, match, match + 0.05, fix + 0.6, fix + 1.1, dur))}</line>')
     for q in DEMO:
-        x, y = pos(q)
-        s.append(f'<circle cx="{x}" cy="{y}" r="9.5" fill="none" stroke="{th["accent"]}" stroke-width="1.5" opacity="0">'
+        x, y = pos(L, q)
+        s.append(f'<circle cx="{x}" cy="{y}" r="{9.5 * k:.1f}" fill="none" stroke="{th["accent"]}" stroke-width="{1.5 * k:.1f}" opacity="0">'
                  f'{anim(dur, "0;0;1;1;0;0", (0, err, err + 0.3, fix, fix + 0.35, dur))}</circle>'
-                 f'<circle cx="{x}" cy="{y}" r="4.6" fill="{th["accent"]}" opacity="0">'
+                 f'<circle cx="{x}" cy="{y}" r="{4.6 * k:.1f}" fill="{th["accent"]}" opacity="0">'
                  f'{anim(dur, "0;0;1;1;0;0", (0, err, err + 0.3, fix, fix + 0.35, dur))}</circle>'
-                 f'<circle cx="{x}" cy="{y}" r="12" fill="{th["fg"]}" opacity="0" filter="url(#glow)">'
+                 f'<circle cx="{x}" cy="{y}" r="{12 * k:.1f}" fill="{th["fg"]}" opacity="0" filter="url(#glow)">'
                  f'{anim(dur, "0;0;0.8;0;0", (0, fix, fix + 0.15, fix + 0.6, dur))}</circle>')
-    # caption: each step lit while it happens
+    # caption on the first status row: each step lit while it happens
     steps = [("ERROR", err, syn), ("SYNDROME", syn, match), ("MATCH", match, fix), ("CORRECT", fix, calm)]
-    gap = 18
-    total = sum(S.width(w, 11, 0.12) for w, *_ in steps) + gap * (len(steps) - 1)
-    x = 1216 - total
-    s.append(S.text("DEMO", 11, x - gap, 304, th["mute"], anchor="end", tracking=0.12))
+    size, gap, tr = L.size, L.size * 1.2, 0.12
+    words = ["DEMO"] + [w for w, *_ in steps]
+    total = sum(S.width(w, size, tr) for w in words) + gap * (len(words) - 1)
+    x = L.x - (total if L.anchor == "end" else total / 2)
+    y = L.rows[0]
+    s.append(S.text("DEMO", size, x, y, th["mute"], tracking=tr))
+    x += S.width("DEMO", size, tr) + gap
     for word, a, b in steps:
-        s.append(S.text(word, 11, x, 304, th["faint"], tracking=0.12))
-        s.append(S.text(word, 11, x, 304, th["fg"], tracking=0.12, extra=' opacity="0"',
+        s.append(S.text(word, size, x, y, th["faint"], tracking=tr))
+        s.append(S.text(word, size, x, y, th["fg"], tracking=tr, extra=' opacity="0"',
                         child=anim(dur, "0;0;1;1;0;0", (0, a, a + 0.15, b - 0.1, b + 0.1, dur))))
-        x += S.width(word, 11, 0.12) + gap
+        x += S.width(word, size, tr) + gap
     return s
 
 
-def replay(th, res):
+def replay(L, th, res):
     """Loop the last decode: the errors and lit stabilizers, the correction landing, then clean."""
-    dur = 7.0
+    dur, k = 7.0, L.k
     ex, ez = res.get("ex", []), res.get("ez", [])
     corr = sorted(set(res.get("cx", [])) | set(res.get("cz", [])))
     clear = 3.2
     s = []
     for st in lit_checks(ex, ez):
-        s.append(f'<path d="{shape(st[2])}" fill="{th["accent"]}" opacity="0.5">'
+        s.append(f'<path d="{shape(L, st[2])}" fill="{th["accent"]}" opacity="0.5">'
                  f'{anim(dur, "0.5;0.5;0;0;0.5", (0, clear, clear + 0.5, dur - 0.3, dur))}</path>')
-    s += errors_layer(th, ex, ez, child=anim(dur, "1;1;0;0;1", (0, clear, clear + 0.5, dur - 0.3, dur)))
+    s += errors_layer(L, th, ex, ez, child=anim(dur, "1;1;0;0;1", (0, clear, clear + 0.5, dur - 0.3, dur)))
     step = min(0.3, 1.6 / max(len(corr), 1))
-    for k, q in enumerate(corr):
-        x, y = pos(q)
-        t0 = 1.0 + k * step
-        s.append(f'<circle cx="{x}" cy="{y}" r="12.5" fill="none" stroke="{th["mute"]}" stroke-width="1.1" stroke-dasharray="2.5 2.5" opacity="0">'
+    for n, q in enumerate(corr):
+        x, y = pos(L, q)
+        t0 = 1.0 + n * step
+        s.append(f'<circle cx="{x}" cy="{y}" r="{12.5 * k:.1f}" fill="none" stroke="{th["mute"]}" stroke-width="{1.1 * k:.1f}" '
+                 f'stroke-dasharray="{2.5 * k:.1f} {2.5 * k:.1f}" opacity="0">'
                  f'{anim(dur, "0;0;1;1;0", (0, t0, t0 + 0.2, dur - 0.4, dur))}</circle>'
-                 f'<circle cx="{x}" cy="{y}" r="12" fill="{th["fg"]}" opacity="0" filter="url(#glow)">'
+                 f'<circle cx="{x}" cy="{y}" r="{12 * k:.1f}" fill="{th["fg"]}" opacity="0" filter="url(#glow)">'
                  f'{anim(dur, "0;0;0.8;0;0", (0, t0, t0 + 0.12, t0 + 0.5, dur))}</circle>')
     return s
 
 
-def banner(d, mode):
-    th, tile = THEMES[mode], TILES[mode]
-    s = [f'<defs><filter id="glow" x="-150%" y="-150%" width="400%" height="400%"><feGaussianBlur stdDeviation="3"/></filter></defs>',
-         f'<rect x="0.5" y="0.5" width="{W - 1}" height="{H - 1}" rx="16" fill="{th["panel"]}" stroke="{th["edge"]}"/>',
-         json.loads(TEXT.read_text())[mode]]
-    s.append(S.text("ROTATED SURFACE CODE  ·  d = 5  ·  [[25,1,5]]", 11, 1216, 54, th["mute"], anchor="end", tracking=0.1))
-    for st in STABS:
-        s.append(f'<path d="{shape(st[2])}" fill="{tile[st[0]]}" stroke="{tile["edge"]}"/>')
+def plural(n, word):
+    return f"{n} {word}{'' if n == 1 else 'S'}"
 
+
+def status(d, L):
+    """The status rows under the patch; on a phone the same facts in shorter rows.
+    A None first row is left for the demo's animated caption."""
     res = d.get("result") or {}
     nx, nz = len(d["x"]), len(d["z"])
-    lit = lit_checks(d["x"], d["z"])
+    nlit = len(lit_checks(d["x"], d["z"]))
+    tally = f"{plural(d['decodes'], 'DECODE')}  ·  {plural(d['failures'], 'LOGICAL FAILURE')}"
+    last = f"LAST: {d['last']['op'].upper()} BY @{d['last']['user'][:24]}" if d["last"] else ""
+    phone = L is MOBILE
     if nx or nz:
-        pulse = '<animate attributeName="opacity" values="0.35;0.65;0.35" dur="2.4s" repeatCount="indefinite"/>'
-        s += [f'<path d="{shape(st[2])}" fill="{th["accent"]}" opacity="0.5">{pulse}</path>' for st in lit]
+        first = (f"{nx} X, {nz} Z ERROR{'' if nx + nz == 1 else 'S'}  ·  {nlit} LIT" if phone else
+                 f"{nx} X, {nz} Z ERROR{'' if nx + nz == 1 else 'S'}  ·  {plural(nlit, 'STABILIZER')} LIT  ·  DECODE?")
     elif res:
-        s += replay(th, res)
-    above = []  # drawn over the qubits
-    if not (nx or nz) and not res:
-        above = demo(th)
+        verdict = "LOGICAL QUBIT INTACT" if not res["logical"] else f"LOGICAL {res['logical']} FLIPPED"
+        first = (f"DECODED  ·  {verdict}" if phone else
+                 f"DECODED  ·  CORRECTION WEIGHT {len(res['cx']) + len(res['cz'])}  ·  {verdict}")
+    else:
+        first = None
+    if first is None:
+        rows = [None, "NO ERRORS  ·  ADD ONE BELOW", tally] if phone else [None, f"NO ERRORS  ·  ADD ONE BELOW  ·  {tally}"]
+    else:
+        rows = [first, tally, last] if phone else [first, f"{tally}  ·  {last}" if last else tally]
+    return rows
+
+
+def banner(d, mode, L=DESKTOP):
+    th, tile, k = THEMES[mode], TILES[mode], L.k
+    s = [f'<defs><filter id="glow" x="-150%" y="-150%" width="400%" height="400%"><feGaussianBlur stdDeviation="{3 * k:.1f}"/></filter></defs>',
+         f'<rect x="0.5" y="0.5" width="{L.W - 1}" height="{L.H - 1}" rx="16" fill="{th["panel"]}" stroke="{th["edge"]}"/>',
+         json.loads(TEXT.read_text())[mode + L.suffix]]
+    size, lx, ly, anchor = L.label
+    s.append(S.text("ROTATED SURFACE CODE  ·  d = 5  ·  [[25,1,5]]", size, lx, ly, th["mute"], anchor=anchor, tracking=0.1))
+    for st in STABS:
+        s.append(f'<path d="{shape(L, st[2])}" fill="{tile[st[0]]}" stroke="{tile["edge"]}"/>')
+
+    res = d.get("result") or {}
+    errors = bool(d["x"] or d["z"])
+    if errors:
+        pulse = '<animate attributeName="opacity" values="0.35;0.65;0.35" dur="2.4s" repeatCount="indefinite"/>'
+        s += [f'<path d="{shape(L, st[2])}" fill="{th["accent"]}" opacity="0.5">{pulse}</path>' for st in lit_checks(d["x"], d["z"])]
+    elif res:
+        s += replay(L, th, res)
 
     for q in range(N):
-        x, y = pos(q)
-        s.append(f'<circle cx="{x}" cy="{y}" r="7" fill="{th["fg"]}" opacity="{0.22 if mode == "dark" else 0.1}" filter="url(#glow)"/>'
-                 f'<circle cx="{x}" cy="{y}" r="3.6" fill="{th["fg"]}"/>')
-    if nx or nz:
-        s += errors_layer(th, d["x"], d["z"])
+        x, y = pos(L, q)
+        s.append(f'<circle cx="{x}" cy="{y}" r="{7 * k:.1f}" fill="{th["fg"]}" opacity="{0.22 if mode == "dark" else 0.1}" filter="url(#glow)"/>'
+                 f'<circle cx="{x}" cy="{y}" r="{3.6 * k:.1f}" fill="{th["fg"]}"/>')
+    if errors:
+        s += errors_layer(L, th, d["x"], d["z"])
         recent = (d.get("recent") or {}).get("q")
         if recent is not None:
-            x, y = pos(recent)
-            s.append(f'<circle cx="{x}" cy="{y}" r="8" fill="none" stroke="{th["accent"]}" stroke-width="1.4">'
-                     f'<animate attributeName="r" values="8;22" dur="1.8s" repeatCount="indefinite"/>'
+            x, y = pos(L, recent)
+            s.append(f'<circle cx="{x}" cy="{y}" r="{8 * k:.1f}" fill="none" stroke="{th["accent"]}" stroke-width="{1.4 * k:.1f}">'
+                     f'<animate attributeName="r" values="{8 * k:.1f};{22 * k:.1f}" dur="1.8s" repeatCount="indefinite"/>'
                      f'<animate attributeName="opacity" values="0.9;0" dur="1.8s" repeatCount="indefinite"/></circle>')
-    s += above
+    elif not res:
+        s += demo(L, th)
 
-    stats = f"{d['decodes']} DECODE{'' if d['decodes'] == 1 else 'S'}  ·  {d['failures']} LOGICAL FAILURE{'' if d['failures'] == 1 else 'S'}"
-    if nx or nz:
-        line = f"{nx} X, {nz} Z ERROR{'' if nx + nz == 1 else 'S'}  ·  {len(lit)} STABILIZER{'' if len(lit) == 1 else 'S'} LIT  ·  DECODE?"
-    elif res:
-        line = (f"DECODED  ·  CORRECTION WEIGHT {len(res['cx']) + len(res['cz'])}  ·  "
-                + ("LOGICAL QUBIT INTACT" if not res["logical"] else f"LOGICAL {res['logical']} FLIPPED"))
-    else:
-        line = None  # the demo caption takes this row
-        stats = "NO ERRORS  ·  ADD ONE BELOW  ·  " + stats
-    if line:
-        s.append(S.text(line, 11, 1216, 304, th["fg"], anchor="end", tracking=0.1))
-    if d["last"] and line:
-        stats += f"  ·  LAST: {d['last']['op'].upper()} BY @{d['last']['user'][:24]}"
-    s.append(S.text(stats, 11, 1216, 326, th["mute"], anchor="end", tracking=0.1))
-    return svg(W, H, "".join(s), alt(d))
+    for i, text in enumerate(status(d, L)):
+        if text:
+            s.append(S.text(text, L.size, L.x, L.rows[i], th["fg"] if i == 0 else th["mute"], anchor=L.anchor, tracking=0.1))
+    return svg(L.W, L.H, "".join(s), alt(d))
 
 
 def alt(d):
@@ -340,8 +384,12 @@ def issue_link(op):
             f"&body=Press+Submit.+A+bot+updates+the+surface+code+within+a+minute.")
 
 
-def picture(name, alt_text, size):
-    return (f'<picture><source media="(prefers-color-scheme: dark)" srcset="{name}-dark.svg">'
+def picture(name, alt_text, size, phone=False):
+    """Dark and light versions; with phone=True, also a tall layout for narrow screens."""
+    narrow = "(max-width: 600px)"
+    phones = (f'<source media="{narrow} and (prefers-color-scheme: dark)" srcset="{name}-mobile-dark.svg">'
+              f'<source media="{narrow}" srcset="{name}-mobile-light.svg">') if phone else ""
+    return (f'<picture>{phones}<source media="(prefers-color-scheme: dark)" srcset="{name}-dark.svg">'
             f'<img src="{name}-light.svg" alt="{alt_text}" {size}></picture>')
 
 
@@ -351,7 +399,7 @@ def block(d):
     buttons = "&nbsp;".join(f'<a href="{issue_link(a)}">{picture(f"assets/btn-qec-{a.lower()}", labels[a], "height=\"34\"")}</a>'
                             for a in ACTIONS)
     return f"""<!-- QEC:START -->
-{picture(f"assets/qec/banner-{d['moves']}", escape(alt(d), quote=True), 'width="100%"')}
+{picture(f"assets/qec/banner-{d['moves']}", escape(alt(d), quote=True), 'width="100%"', phone=True)}
 
 <p align="center">{buttons}</p>
 <!-- QEC:END -->"""
@@ -359,12 +407,13 @@ def block(d):
 
 def render(d):
     OUT.mkdir(parents=True, exist_ok=True)
-    keep = {f"banner-{d['moves']}-{m}.svg" for m in THEMES}
+    keep = {f"banner-{d['moves']}{L.suffix}-{m}.svg" for L in LAYOUTS for m in THEMES}
     for old in OUT.glob("banner-*.svg"):
         if old.name not in keep:
             old.unlink()
-    for mode in THEMES:
-        (OUT / f"banner-{d['moves']}-{mode}.svg").write_text(banner(d, mode))
+    for L in LAYOUTS:
+        for mode in THEMES:
+            (OUT / f"banner-{d['moves']}{L.suffix}-{mode}.svg").write_text(banner(d, mode, L))
     text = README.read_text()
     README.write_text(re.sub(r"<!-- QEC:START -->.*?<!-- QEC:END -->", lambda m: block(d), text, flags=re.S))
 

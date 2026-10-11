@@ -24,6 +24,12 @@ ASSETS = ROOT / "assets"
 MONO_CELL = 0.6  # IBM Plex Mono advance, in em
 
 
+def fit(text, font, max_w, size, tracking=0.0):
+    while T.measure(text, font, size, tracking) > max_w:
+        size -= 0.5
+    return size
+
+
 def write(name, mode, body):
     (ASSETS / f"{name}-{mode}.svg").write_text(body)
 
@@ -34,16 +40,26 @@ def write(name, mode, body):
 # live surface code. That script has only the mono glyph atlas, so the name block
 # on the left is drawn here once and stored as SVG fragments it pastes in.
 
-def banner_text(mode):
+def banner_text(mode, phone=False):
     th = THEMES[mode]
     handle = "amoghdprasanna"
-    return "".join([
-        T.text(handle, "mono", 13, 64, 104, th["mute"], tracking=0.06),
-        f'<circle cx="{64 + T.measure(handle, "mono", 13, 0.06) + 12:.1f}" cy="99.5" r="3" fill="{th["accent"]}"/>',
-        T.text("Amogh D. Prasanna", "inter-display-light", 54, 61, 180, th["fg"], tracking=-0.015),
-        T.text("quantum compilation · error correction · quantum simulation", "mono", 14, 64, 226, th["fg"], tracking=0.02),
-        T.text("UMD  /  FERMILAB SQMS", "mono", 11.5, 64, 264, th["mute"], tracking=0.14),
-    ])
+    if not phone:
+        return "".join([
+            T.text(handle, "mono", 15, 64, 104, th["mute"], tracking=0.06),
+            f'<circle cx="{64 + T.measure(handle, "mono", 15, 0.06) + 13:.1f}" cy="98.5" r="3.5" fill="{th["accent"]}"/>',
+            T.text("Amogh D. Prasanna", "inter-display-light", 58, 61, 184, th["fg"], tracking=-0.015),
+            T.text("quantum compilation · error correction · quantum simulation", "mono", 19, 64, 234, th["fg"], tracking=0.01),
+            T.text("UMD  /  FERMILAB SQMS", "mono", 15, 64, 276, th["mute"], tracking=0.14),
+        ])
+    # a tall layout for phones: everything bigger, one topic per line
+    size = fit("Amogh D. Prasanna", "inter-display-light", 612, 80, -0.015)
+    s = [T.text(handle, "mono", 24, 54, 92, th["mute"], tracking=0.06),
+         f'<circle cx="{54 + T.measure(handle, "mono", 24, 0.06) + 18:.1f}" cy="83.5" r="5" fill="{th["accent"]}"/>',
+         T.text("Amogh D. Prasanna", "inter-display-light", size, 51, 186, th["fg"], tracking=-0.015)]
+    for i, topic in enumerate(["quantum compilation", "error correction", "quantum simulation"]):
+        s.append(T.text(topic, "mono", 28, 54, 252 + i * 42, th["fg"], tracking=0.01))
+    s.append(T.text("UMD  /  FERMILAB SQMS", "mono", 22, 54, 398, th["mute"], tracking=0.14))
+    return "".join(s)
 
 
 # ---------------------------------------------------------------- section headers
@@ -114,7 +130,8 @@ def main():
             write(f"btn-{key}", mode, button(mode, label, arrow=key != "email"))
         for key, label in QEC_BUTTONS.items():
             write(f"btn-qec-{key}", mode, button(mode, label, arrow=False))
-    (ROOT / "scripts" / "banner_text.json").write_text(json.dumps({m: banner_text(m) for m in THEMES}) + "\n")
+    texts = {m: banner_text(m) for m in THEMES} | {f"{m}-mobile": banner_text(m, phone=True) for m in THEMES}
+    (ROOT / "scripts" / "banner_text.json").write_text(json.dumps(texts) + "\n")
     import qec
     qec.render(qec.load())
 
