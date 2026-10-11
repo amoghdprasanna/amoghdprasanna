@@ -166,50 +166,156 @@ def shape(spec):
     return f"M{x} {y}A{r} {r} 0 0 1 {x} {y + P}Z"
 
 
+def center(spec):
+    kind, i, j = spec
+    x, y = pos(idx(i, j))
+    r = P / 2
+    return {"sq": (x + r, y + r), "top": (x + r, y - r / 2), "bottom": (x + r, y + r / 2),
+            "left": (x - r / 2, y + r), "right": (x + r / 2, y + r)}[kind]
+
+
+def kt(dur, *ts):
+    return ";".join(f"{t / dur:.4f}" for t in ts)
+
+
+def anim(dur, values, times, attr="opacity"):
+    return (f'<animate attributeName="{attr}" dur="{dur}s" repeatCount="indefinite" '
+            f'values="{values}" keyTimes="{kt(dur, *times)}"/>')
+
+
+def lit_checks(x_errs, z_errs):
+    """The stabilizers that fire for these errors."""
+    out = []
+    for kind, errs in (("x", x_errs), ("z", z_errs)):
+        syn = syndrome(kind, errs)
+        out += [st for k, st in enumerate(CHECKS[kind]) if syn >> k & 1]
+    return out
+
+
+# The header animates in every state: a demo when the code is clean, the live
+# errors with their syndromes pulsing while they wait, and a replay of the last
+# decode right after one.
+DEMO = [idx(1, 2), idx(2, 2)]  # an X chain of two, whose ends light two Z stabilizers
+
+
+def errors_layer(th, xs, zs, child=""):
+    """X is a filled violet qubit, Z a violet ring, Y both."""
+    def el(tag):
+        return f"{tag}>{child}</circle>" if child else f"{tag}/>"
+    s = []
+    for q in xs:
+        x, y = pos(q)
+        s.append(el(f'<circle cx="{x}" cy="{y}" r="4.6" fill="{th["accent"]}"'))
+    for q in zs:
+        x, y = pos(q)
+        s.append(el(f'<circle cx="{x}" cy="{y}" r="9.5" fill="none" stroke="{th["accent"]}" stroke-width="1.6"'))
+    return s
+
+
+def demo(th):
+    dur = 9.0
+    err, syn, match, fix, calm = 1.0, 2.0, 3.4, 5.0, 6.2
+    s = []
+    for st in lit_checks(DEMO, []):
+        s.append(f'<path d="{shape(st[2])}" fill="{th["accent"]}" opacity="0">'
+                 f'{anim(dur, "0;0;0.55;0.55;0;0", (0, syn, syn + 0.3, fix + 0.4, fix + 0.9, dur))}</path>')
+    (x1, y1), (x2, y2) = (center(st[2]) for st in lit_checks(DEMO, []))
+    L = ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
+    s.append(f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" stroke="{th["accent"]}" stroke-width="1.6" '
+             f'stroke-linecap="round" stroke-dasharray="{L:.1f}" stroke-dashoffset="{L:.1f}" opacity="0">'
+             f'{anim(dur, f"{L:.1f};{L:.1f};0;0", (0, match, match + 0.7, dur), "stroke-dashoffset")}'
+             f'{anim(dur, "0;0;1;1;0;0", (0, match, match + 0.05, fix + 0.6, fix + 1.1, dur))}</line>')
+    for q in DEMO:
+        x, y = pos(q)
+        s.append(f'<circle cx="{x}" cy="{y}" r="9.5" fill="none" stroke="{th["accent"]}" stroke-width="1.5" opacity="0">'
+                 f'{anim(dur, "0;0;1;1;0;0", (0, err, err + 0.3, fix, fix + 0.35, dur))}</circle>'
+                 f'<circle cx="{x}" cy="{y}" r="4.6" fill="{th["accent"]}" opacity="0">'
+                 f'{anim(dur, "0;0;1;1;0;0", (0, err, err + 0.3, fix, fix + 0.35, dur))}</circle>'
+                 f'<circle cx="{x}" cy="{y}" r="12" fill="{th["fg"]}" opacity="0" filter="url(#glow)">'
+                 f'{anim(dur, "0;0;0.8;0;0", (0, fix, fix + 0.15, fix + 0.6, dur))}</circle>')
+    # caption: each step lit while it happens
+    steps = [("ERROR", err, syn), ("SYNDROME", syn, match), ("MATCH", match, fix), ("CORRECT", fix, calm)]
+    gap = 18
+    total = sum(S.width(w, 11, 0.12) for w, *_ in steps) + gap * (len(steps) - 1)
+    x = 1216 - total
+    s.append(S.text("DEMO", 11, x - gap, 304, th["mute"], anchor="end", tracking=0.12))
+    for word, a, b in steps:
+        s.append(S.text(word, 11, x, 304, th["faint"], tracking=0.12))
+        s.append(S.text(word, 11, x, 304, th["fg"], tracking=0.12, extra=' opacity="0"',
+                        child=anim(dur, "0;0;1;1;0;0", (0, a, a + 0.15, b - 0.1, b + 0.1, dur))))
+        x += S.width(word, 11, 0.12) + gap
+    return s
+
+
+def replay(th, res):
+    """Loop the last decode: the errors and lit stabilizers, the correction landing, then clean."""
+    dur = 7.0
+    ex, ez = res.get("ex", []), res.get("ez", [])
+    corr = sorted(set(res.get("cx", [])) | set(res.get("cz", [])))
+    clear = 3.2
+    s = []
+    for st in lit_checks(ex, ez):
+        s.append(f'<path d="{shape(st[2])}" fill="{th["accent"]}" opacity="0.5">'
+                 f'{anim(dur, "0.5;0.5;0;0;0.5", (0, clear, clear + 0.5, dur - 0.3, dur))}</path>')
+    s += errors_layer(th, ex, ez, child=anim(dur, "1;1;0;0;1", (0, clear, clear + 0.5, dur - 0.3, dur)))
+    step = min(0.3, 1.6 / max(len(corr), 1))
+    for k, q in enumerate(corr):
+        x, y = pos(q)
+        t0 = 1.0 + k * step
+        s.append(f'<circle cx="{x}" cy="{y}" r="12.5" fill="none" stroke="{th["mute"]}" stroke-width="1.1" stroke-dasharray="2.5 2.5" opacity="0">'
+                 f'{anim(dur, "0;0;1;1;0", (0, t0, t0 + 0.2, dur - 0.4, dur))}</circle>'
+                 f'<circle cx="{x}" cy="{y}" r="12" fill="{th["fg"]}" opacity="0" filter="url(#glow)">'
+                 f'{anim(dur, "0;0;0.8;0;0", (0, t0, t0 + 0.12, t0 + 0.5, dur))}</circle>')
+    return s
+
+
 def banner(d, mode):
     th, tile = THEMES[mode], TILES[mode]
     s = [f'<defs><filter id="glow" x="-150%" y="-150%" width="400%" height="400%"><feGaussianBlur stdDeviation="3"/></filter></defs>',
          f'<rect x="0.5" y="0.5" width="{W - 1}" height="{H - 1}" rx="16" fill="{th["panel"]}" stroke="{th["edge"]}"/>',
          json.loads(TEXT.read_text())[mode]]
     s.append(S.text("ROTATED SURFACE CODE  ·  d = 5  ·  [[25,1,5]]", 11, 1216, 54, th["mute"], anchor="end", tracking=0.1))
-
-    lit = {id(st) for kind in ("x", "z") for k, st in enumerate(CHECKS[kind]) if syndrome(kind, d[kind]) >> k & 1}
     for st in STABS:
         s.append(f'<path d="{shape(st[2])}" fill="{tile[st[0]]}" stroke="{tile["edge"]}"/>')
-    pulse = '<animate attributeName="opacity" values="0.35;0.65;0.35" dur="2.4s" repeatCount="indefinite"/>'
-    for st in STABS:
-        if id(st) in lit:
-            s.append(f'<path d="{shape(st[2])}" fill="{th["accent"]}" opacity="0.5">{pulse}</path>')
 
     res = d.get("result") or {}
+    nx, nz = len(d["x"]), len(d["z"])
+    lit = lit_checks(d["x"], d["z"])
+    if nx or nz:
+        pulse = '<animate attributeName="opacity" values="0.35;0.65;0.35" dur="2.4s" repeatCount="indefinite"/>'
+        s += [f'<path d="{shape(st[2])}" fill="{th["accent"]}" opacity="0.5">{pulse}</path>' for st in lit]
+    elif res:
+        s += replay(th, res)
+    above = []  # drawn over the qubits
+    if not (nx or nz) and not res:
+        above = demo(th)
+
     for q in range(N):
         x, y = pos(q)
         s.append(f'<circle cx="{x}" cy="{y}" r="7" fill="{th["fg"]}" opacity="{0.22 if mode == "dark" else 0.1}" filter="url(#glow)"/>'
                  f'<circle cx="{x}" cy="{y}" r="3.6" fill="{th["fg"]}"/>')
-    # errors: X is a filled violet qubit, Z a violet ring, Y both
-    for q in d["x"]:
-        x, y = pos(q)
-        s.append(f'<circle cx="{x}" cy="{y}" r="4.6" fill="{th["accent"]}"/>')
-    for q in d["z"]:
-        x, y = pos(q)
-        s.append(f'<circle cx="{x}" cy="{y}" r="9.5" fill="none" stroke="{th["accent"]}" stroke-width="1.6"/>')
-    # after a decode: the correction it applied, drawn as dashed rings
-    for q in sorted(set(res.get("cx", [])) | set(res.get("cz", []))):
-        x, y = pos(q)
-        s.append(f'<circle cx="{x}" cy="{y}" r="12.5" fill="none" stroke="{th["mute"]}" stroke-width="1.1" stroke-dasharray="2.5 2.5"/>')
+    if nx or nz:
+        s += errors_layer(th, d["x"], d["z"])
+        recent = (d.get("recent") or {}).get("q")
+        if recent is not None:
+            x, y = pos(recent)
+            s.append(f'<circle cx="{x}" cy="{y}" r="8" fill="none" stroke="{th["accent"]}" stroke-width="1.4">'
+                     f'<animate attributeName="r" values="8;22" dur="1.8s" repeatCount="indefinite"/>'
+                     f'<animate attributeName="opacity" values="0.9;0" dur="1.8s" repeatCount="indefinite"/></circle>')
+    s += above
 
-    nx, nz = len(d["x"]), len(d["z"])
-    nlit = len(lit)
-    if res and not (nx or nz):
+    stats = f"{d['decodes']} DECODE{'' if d['decodes'] == 1 else 'S'}  ·  {d['failures']} LOGICAL FAILURE{'' if d['failures'] == 1 else 'S'}"
+    if nx or nz:
+        line = f"{nx} X, {nz} Z ERROR{'' if nx + nz == 1 else 'S'}  ·  {len(lit)} STABILIZER{'' if len(lit) == 1 else 'S'} LIT  ·  DECODE?"
+    elif res:
         line = (f"DECODED  ·  CORRECTION WEIGHT {len(res['cx']) + len(res['cz'])}  ·  "
                 + ("LOGICAL QUBIT INTACT" if not res["logical"] else f"LOGICAL {res['logical']} FLIPPED"))
-    elif nx or nz:
-        line = f"{nx} X, {nz} Z ERROR{'' if nx + nz == 1 else 'S'}  ·  {nlit} STABILIZER{'' if nlit == 1 else 'S'} LIT  ·  DECODE?"
     else:
-        line = "IN THE CODE SPACE  ·  ADD AN ERROR BELOW"
-    s.append(S.text(line, 11, 1216, 304, th["fg"], anchor="end", tracking=0.1))
-    stats = f"{d['decodes']} DECODE{'' if d['decodes'] == 1 else 'S'}  ·  {d['failures']} LOGICAL FAILURE{'' if d['failures'] == 1 else 'S'}"
-    if d["last"]:
+        line = None  # the demo caption takes this row
+        stats = "NO ERRORS  ·  ADD ONE BELOW  ·  " + stats
+    if line:
+        s.append(S.text(line, 11, 1216, 304, th["fg"], anchor="end", tracking=0.1))
+    if d["last"] and line:
         stats += f"  ·  LAST: {d['last']['op'].upper()} BY @{d['last']['user'][:24]}"
     s.append(S.text(stats, 11, 1216, 326, th["mute"], anchor="end", tracking=0.1))
     return svg(W, H, "".join(s), alt(d))
@@ -283,6 +389,7 @@ def main():
         q = rng.randrange(N)
         d[op] = toggle(d[op], q)
         d["result"] = None
+        d["recent"] = {"q": q, "kind": op}
         i, j = q % D, q // D
         lit = bin(syndrome(op, d[op])).count("1")
         msg = (f"Put {'an' if op == 'x' else 'a'} **{op.upper()}** error on data qubit ({i}, {j}). "
@@ -293,8 +400,8 @@ def main():
         rx, rz = set(d["x"]) ^ set(cx), set(d["z"]) ^ set(cz)
         flips = [name for name, r, kind in (("X", rx, "x"), ("Z", rz, "z")) if len(r & LOGICAL[kind]) % 2]
         logical = "+".join(flips)
-        d["result"] = {"cx": cx, "cz": cz, "logical": logical}
-        d["x"], d["z"] = [], []
+        d["result"] = {"ex": d["x"], "ez": d["z"], "cx": cx, "cz": cz, "logical": logical}
+        d["x"], d["z"], d["recent"] = [], [], None
         d["decodes"] += 1
         d["failures"] += bool(logical)
         w = len(cx) + len(cz)
@@ -302,7 +409,7 @@ def main():
                + ("The logical qubit survived." if not logical else
                   f"The errors were too many for distance 5: the logical qubit took a **{logical}** flip."))
     elif op == "reset":
-        d.update({"x": [], "z": [], "result": None})
+        d.update({"x": [], "z": [], "result": None, "recent": None})
         msg = "Reset the code to an error-free state."
     else:
         Path("msg.txt").write_text("That isn't an action this code knows. Try X, Z, decode or reset from the profile page.\n")

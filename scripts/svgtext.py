@@ -47,6 +47,8 @@ def _rebuild(d, coords):
     return "".join(parts)
 
 
-def text(s, size, x, y, fill, weight="regular", anchor="start", tracking=0.0, extra=""):
+def text(s, size, x, y, fill, weight="regular", anchor="start", tracking=0.0, extra="", child=""):
     d = path(s, size, x, y, weight, anchor, tracking)
-    return f'<path d="{d}" fill="{fill}"{extra}/>' if d else ""
+    if not d:
+        return ""
+    return f'<path d="{d}" fill="{fill}"{extra}>{child}</path>' if child else f'<path d="{d}" fill="{fill}"{extra}/>'
