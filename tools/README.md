@@ -10,8 +10,6 @@ searchable and reflows on a phone.
 | `assets/qec/banner-N-*.svg` | The header: name and the shared d = 5 surface code | `scripts/qec.py`, on every move |
 | `assets/hdr-*.svg` | Section headers | `tools/build.py` |
 | `assets/btn-*.svg` | Link buttons and the surface code's controls | `tools/build.py` |
-| `assets/gate-*.svg` | The qubit's gate buttons | `tools/build.py` |
-| `assets/qubit/card-N-*.svg` | The qubit's current state | `scripts/qubit.py`, on every move |
 | `scripts/glyphs.json` | Monospace glyph outlines the bots use | `tools/build.py` |
 | `scripts/banner_text.json` | The header's name block, pasted in by `scripts/qec.py` | `tools/build.py` |
 
@@ -39,15 +37,10 @@ the lowest-weight correction that matches the lit stabilizers (exhaustive search
 so every one- and two-qubit error is corrected) and reports whether the logical
 qubit flipped, and `qec: reset` clears it. State lives in `state/qec.json`.
 
-## The qubit
-
-`.github/workflows/qubit.yml` runs on every new issue whose title starts with
-`qubit:` or `qec:`. For the qubit it applies the gate with `scripts/qubit.py`, which uses only the
-standard library, then commits the new state, card and README, replies on the
-issue and closes it. Each move writes a card under a new file name because
-GitHub caches README images for about five minutes and ignores query strings.
-If two people click at once, the later push is rejected and that run starts
-again from the newer state, so no move is lost.
-
-To clear the history, delete `state/qubit.json` and run
-`python3 -c "import sys; sys.path.insert(0, 'scripts'); import qubit; qubit.render(qubit.load())"`.
+`.github/workflows/qec.yml` runs on every new issue whose title starts with
+`qec:`. It runs `scripts/qec.py`, which uses only the standard library, then
+commits the new state, header and README, replies on the issue and closes it.
+Each move writes the header under a new file name because GitHub caches README
+images for about five minutes and ignores query strings. If two people click
+at once, the later push is rejected and that run starts again from the newer
+state, so no move is lost.

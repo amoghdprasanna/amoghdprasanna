@@ -5,7 +5,7 @@ X and Z put that error on a random data qubit; the stabilizers that see it
 light up. Decode finds the lowest-weight correction that explains the lit
 stabilizers, applies it, and checks whether what is left flipped the logical
 qubit. Then the header is redrawn and the README block between the QEC markers
-rewritten. Standard library only, like scripts/qubit.py.
+rewritten. Standard library only, so the Action needs nothing installed.
 
 Layout: rotated surface code [[25, 1, 5]]. Data qubit (i, j) is column i, row j.
 Bulk plaquette (a, b) is Z-type when a + b is even. Weight-2 X stabilizers sit

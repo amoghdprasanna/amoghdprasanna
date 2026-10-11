@@ -1,6 +1,6 @@
 """Monospace text as SVG paths, from the glyph atlas in glyphs.json.
 
-The qubit Action runs this on every move. It has no dependencies: tools/build.py
+The surface-code Action runs this on every move. It has no dependencies: tools/build.py
 precomputes every glyph outline (IBM Plex Mono, with math symbols borrowed from
 DejaVu Sans Mono and FreeSerif) at 1000 units per em, already flipped to SVG's
 y-down axis, so laying out a string is just scaling and translating numbers.

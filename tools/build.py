@@ -1,4 +1,4 @@
-"""Build every static image on the profile, plus the glyph atlas the qubit bot uses.
+"""Build every static image on the profile, plus the glyph atlas the surface-code bot uses.
 
     pip install fonttools uharfbuzz
     python3 tools/build.py
@@ -6,10 +6,9 @@
 Needs the fonts listed in tools/typeset.py inside tools/fonts. Writes:
     assets/hdr-*-{dark,light}.svg       section headers
     assets/btn-*-{dark,light}.svg       link buttons and the surface code's controls
-    assets/gate-*-{dark,light}.svg      the qubit's gate buttons
     scripts/glyphs.json                 mono glyph outlines for scripts/svgtext.py
     scripts/banner_text.json            the header's name block, for scripts/qec.py
-and then redraws the qubit card and the surface-code header from state/.
+and then redraws the surface-code header from state/qec.json.
 """
 import json
 import math
@@ -81,26 +80,6 @@ def button(mode, label, arrow=True):
     return svg(w, h, "".join(s), label.title())
 
 
-# ---------------------------------------------------------------- gate buttons
-
-def gate(mode, name):
-    th = THEMES[mode]
-    w, h = 56, 56
-    s = [f'<line x1="0" y1="28" x2="{w}" y2="28" stroke="{th["faint"]}" stroke-width="1.2"/>',
-         f'<rect x="8.6" y="8.6" width="38.8" height="38.8" rx="7" fill="{th["panel"]}" stroke="{th["fg"]}" stroke-width="1.3"/>']
-    if name == "measure":
-        # the standard meter symbol
-        s.append(f'<path d="M17 36a11 11 0 0 1 22 0" fill="none" stroke="{th["fg"]}" stroke-width="1.4"/>'
-                 f'<path d="M28 36L35.5 21.5" stroke="{th["accent"]}" stroke-width="1.6" stroke-linecap="round"/>'
-                 f'<circle cx="28" cy="36" r="1.8" fill="{th["fg"]}"/>')
-    elif name == "reset":
-        s.append(T.text("|0⟩", "mono-medium", 14, 28, 33, th["fg"], anchor="middle", cell=MONO_CELL))
-    else:
-        s.append(T.text(name, "mono-medium", 19, 28, 35, th["fg"], anchor="middle"))
-    label = {"measure": "Measure the qubit", "reset": "Reset the qubit to |0⟩"}.get(name, f"Apply the {name} gate")
-    return svg(w, h, "".join(s), label)
-
-
 # ---------------------------------------------------------------- glyph atlas
 
 ATLAS_CHARS = "".join(chr(c) for c in range(32, 127)) + "⟨⟩ψ·×−─│θφπ→↗…°±√"
@@ -120,11 +99,9 @@ def atlas():
 HEADERS = {
     "why": ("01", "WHY THIS CODE IS HERE"),
     "now": ("02", "OPEN QUESTIONS"),
-    "qubit": ("03", "A SHARED QUBIT"),
 }
 BUTTONS = {"website": "WEBSITE", "linkedin": "LINKEDIN", "email": "EMAIL"}
 QEC_BUTTONS = {"x": "X ERROR", "z": "Z ERROR", "decode": "DECODE", "reset": "RESET"}
-GATES = ["H", "X", "Y", "Z", "S", "T", "measure", "reset"]
 
 
 def main():
@@ -135,14 +112,10 @@ def main():
             write(f"hdr-{key}", mode, header(mode, num, title))
         for key, label in BUTTONS.items():
             write(f"btn-{key}", mode, button(mode, label, arrow=key != "email"))
-        for g in GATES:
-            write(f"gate-{g.lower()}", mode, gate(mode, g))
         for key, label in QEC_BUTTONS.items():
             write(f"btn-qec-{key}", mode, button(mode, label, arrow=False))
     (ROOT / "scripts" / "banner_text.json").write_text(json.dumps({m: banner_text(m) for m in THEMES}) + "\n")
     import qec
-    import qubit
-    qubit.render(qubit.load())
     qec.render(qec.load())
 
 

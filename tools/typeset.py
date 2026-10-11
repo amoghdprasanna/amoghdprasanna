@@ -4,7 +4,7 @@ GitHub serves README images through its own proxy, so an SVG cannot load a
 webfont. Drawing every glyph as a path is the only way to get the same type on
 every machine. This module shapes text with HarfBuzz (so kerning is right) and
 emits outlines with fontTools. It is a build-time tool; the Action that runs on
-each qubit move uses the precomputed atlas in scripts/glyphs.json instead.
+each surface-code move uses the precomputed atlas in scripts/glyphs.json instead.
 
 Fonts are not committed. Put the files named in FONTS into tools/fonts, or
 point FONT_DIR at a folder holding them. Inter and IBM Plex Mono are OFL;

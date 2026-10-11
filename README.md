@@ -51,19 +51,4 @@ TAK's stock CoT injector only scatters static markers. I added a simulated GPS u
 
 <br>
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="assets/hdr-qubit-dark.svg"><img src="assets/hdr-qubit-light.svg" alt="03. A shared qubit" width="100%" height="44"></picture>
-
-Everyone who visits acts on the same qubit: what you apply, what the state becomes, and what you get when you look.
-
-<!-- QUBIT:START -->
-<picture><source media="(prefers-color-scheme: dark)" srcset="assets/qubit/card-6-dark.svg"><img src="assets/qubit/card-6-light.svg" alt="Bloch sphere of the shared qubit. State |1⟩, P(0) = 0.000. Last move M=1 by @amoghdprasanna." width="100%"></picture>
-
-<p align="center"><a href="https://github.com/amoghdprasanna/amoghdprasanna/issues/new?title=qubit%3A+H&body=Press+Submit.+A+bot+applies+the+gate+within+a+minute."><picture><source media="(prefers-color-scheme: dark)" srcset="assets/gate-h-dark.svg"><img src="assets/gate-h-light.svg" alt="H" width="52"></picture></a><a href="https://github.com/amoghdprasanna/amoghdprasanna/issues/new?title=qubit%3A+X&body=Press+Submit.+A+bot+applies+the+gate+within+a+minute."><picture><source media="(prefers-color-scheme: dark)" srcset="assets/gate-x-dark.svg"><img src="assets/gate-x-light.svg" alt="X" width="52"></picture></a><a href="https://github.com/amoghdprasanna/amoghdprasanna/issues/new?title=qubit%3A+Y&body=Press+Submit.+A+bot+applies+the+gate+within+a+minute."><picture><source media="(prefers-color-scheme: dark)" srcset="assets/gate-y-dark.svg"><img src="assets/gate-y-light.svg" alt="Y" width="52"></picture></a><a href="https://github.com/amoghdprasanna/amoghdprasanna/issues/new?title=qubit%3A+Z&body=Press+Submit.+A+bot+applies+the+gate+within+a+minute."><picture><source media="(prefers-color-scheme: dark)" srcset="assets/gate-z-dark.svg"><img src="assets/gate-z-light.svg" alt="Z" width="52"></picture></a><a href="https://github.com/amoghdprasanna/amoghdprasanna/issues/new?title=qubit%3A+S&body=Press+Submit.+A+bot+applies+the+gate+within+a+minute."><picture><source media="(prefers-color-scheme: dark)" srcset="assets/gate-s-dark.svg"><img src="assets/gate-s-light.svg" alt="S" width="52"></picture></a><a href="https://github.com/amoghdprasanna/amoghdprasanna/issues/new?title=qubit%3A+T&body=Press+Submit.+A+bot+applies+the+gate+within+a+minute."><picture><source media="(prefers-color-scheme: dark)" srcset="assets/gate-t-dark.svg"><img src="assets/gate-t-light.svg" alt="T" width="52"></picture></a><a href="https://github.com/amoghdprasanna/amoghdprasanna/issues/new?title=qubit%3A+measure&body=Press+Submit.+A+bot+applies+the+gate+within+a+minute."><picture><source media="(prefers-color-scheme: dark)" srcset="assets/gate-measure-dark.svg"><img src="assets/gate-measure-light.svg" alt="Measure" width="52"></picture></a><a href="https://github.com/amoghdprasanna/amoghdprasanna/issues/new?title=qubit%3A+reset&body=Press+Submit.+A+bot+applies+the+gate+within+a+minute."><picture><source media="(prefers-color-scheme: dark)" srcset="assets/gate-reset-dark.svg"><img src="assets/gate-reset-light.svg" alt="Reset" width="52"></picture></a></p>
-
-<p align="center"><sub>Pick a gate. GitHub opens an issue already titled with it; press <b>Submit</b> and a bot applies it within a minute.<br>
-<code>measure</code> samples the Born rule, so the outcome is genuinely random. <a href="https://github.com/amoghdprasanna/amoghdprasanna/issues?q=is%3Aissue+in%3Atitle+%22qubit%3A%22">Every move so far</a>.</sub></p>
-<!-- QUBIT:END -->
-
-<br>
-
-<sub>The banner is a distance-5 rotated surface code shared by every visitor: add X or Z errors, watch the stabilizers that catch them light up, then decode and see whether the logical qubit survived. Everything on this page, including the qubit, is drawn by the code in this repository.</sub>
+<sub>The banner is a distance-5 rotated surface code shared by every visitor: add X or Z errors, watch the stabilizers that catch them light up, then decode and see whether the logical qubit survived. Everything on this page is drawn by the code in this repository.</sub>
