@@ -1,13 +1,15 @@
 {
-  "x": [],
+  "x": [
+    10
+  ],
   "z": [
     22
   ],
-  "moves": 4,
+  "moves": 5,
   "decodes": 1,
   "failures": 0,
   "last": {
-    "op": "Z",
+    "op": "X",
     "user": "amoghdprasanna",
     "at": "2026-10-11T20:49Z"
   },
