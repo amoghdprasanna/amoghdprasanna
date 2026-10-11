@@ -1,6 +1,6 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/banner-dark.svg">
-  <img src="assets/banner-light.svg" alt="Amogh D. Prasanna. Teaching noisy quantum hardware to compute correctly. An animated array of trapped atoms loads, sorts itself into a block, and is entangled." width="100%">
+  <img src="assets/banner-light.svg" alt="Amogh D. Prasanna: quantum compilation, error correction, generative QML. UMD and Fermilab SQMS. An animated distance-5 rotated surface code: an error chain lights two syndromes, a decoder matches them, and the correction clears them." width="100%">
 </picture>
 
 I'm a graduate researcher at the University of Maryland, working with Prof. Shabnam Jabeen and, at Fermilab's SQMS center, Dr. Tanay Roy. I care about the gap between the circuit we write and what the hardware actually does.
@@ -65,4 +65,4 @@ Everyone who visits acts on the same qubit: what you apply, what the state becom
 
 <br>
 
-<sub>The banner is a tweezer array: atoms load at random, are sorted into a defect-free block, and are entangled by a Rydberg pulse. Everything on this page, including the qubit, is drawn by the code in this repository.</sub>
+<sub>The banner is a distance-5 rotated surface code: two X errors light the syndromes at the ends of their chain, a decoder matches them, and the correction clears them. Everything on this page, including the qubit, is drawn by the code in this repository.</sub>
