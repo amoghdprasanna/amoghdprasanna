@@ -40,9 +40,9 @@ def fit(text, font, max_w, size, tracking=0.0):
 # A distance-5 rotated surface code, [[25, 1, 5]]: 25 data qubits, 24 stabilizers.
 # On a loop, two X errors appear, the Z stabilizers next to the ends of the chain
 # light up, a decoder matches the pair, and the correction clears them.
-W, H = 1280, 320
-D, P = 5, 40                 # code distance, pitch between data qubits
-CX, CY = 1030, 172           # centre of the patch
+W, H = 1280, 400
+D, P = 5, 44                 # code distance, pitch between data qubits
+CX, CY = 1040, 208           # centre of the patch
 DUR = 9.0
 ERR, SYN, MATCH, FIX, CALM = 1.0, 2.0, 3.4, 5.0, 6.2
 ERRORS = [(1, 2), (2, 2)]    # data qubits hit by X, as (column, row)
@@ -112,14 +112,16 @@ def banner(mode):
          f'<rect x="0.5" y="0.5" width="{W - 1}" height="{H - 1}" rx="16" fill="{th["panel"]}" stroke="{th["edge"]}"/>']
 
     # left column: who and what
-    s.append(T.text("amoghdprasanna", "mono", 13, 64, 100, th["mute"], tracking=0.06))
-    s.append(f'<circle cx="{64 + T.measure("amoghdprasanna", "mono", 13, 0.06) + 12:.1f}" cy="95.5" r="3" fill="{th["accent"]}"/>')
-    s.append(T.text("Amogh D. Prasanna", "inter-display-light", 54, 61, 176, th["fg"], tracking=-0.015))
-    s.append(T.text("quantum compilation · error correction · generative QML", "mono", 14, 64, 222, th["fg"], tracking=0.02))
-    s.append(T.text("UMD  /  FERMILAB SQMS", "mono", 11.5, 64, 260, th["mute"], tracking=0.14))
+    s.append(f'<circle cx="68" cy="76" r="3.5" fill="{th["accent"]}"/>')
+    s.append(T.text("AMOGH D. PRASANNA", "mono", 13, 84, 80.5, th["mute"], tracking=0.14))
+    lines = ["Teaching noisy quantum", "hardware to compute", "correctly."]
+    size = min(fit(l, "inter-display-light", 640, 56, -0.01) for l in lines)
+    for i, l in enumerate(lines):
+        s.append(T.text(l, "inter-display-light", size, 62, 172 + i * size * 1.12, th["fg"], tracking=-0.01))
+    s.append(T.text("QUDIT COMPILATION / ERROR CORRECTION / QUANTUM GENERATIVE MODELS", "mono", 11.5, 64, 352, th["mute"], tracking=0.1))
 
     # right column: the code patch
-    s.append(T.text("ROTATED SURFACE CODE  ·  d = 5  ·  [[25,1,5]]", "mono", 11, 1216, 52, th["mute"], anchor="end", tracking=0.1, cell=MONO_CELL))
+    s.append(T.text("ROTATED SURFACE CODE  ·  d = 5  ·  [[25,1,5]]", "mono", 11, 1216, 80.5, th["mute"], anchor="end", tracking=0.1, cell=MONO_CELL))
     stabs = stabilizers()
     flipped = [st for st in stabs if st[0] == "z" and sum(d in ERRORS for d in st[1]) % 2 == 1]
     assert len(flipped) == 2
@@ -158,11 +160,11 @@ def banner(mode):
     total = sum(T.measure(w, "mono", 11, 0.12) for w, *_ in steps) + 18 * (len(steps) - 1)
     cap_x = CX - total / 2
     for word, a, b in steps:
-        s.append(T.text(word, "mono", 11, cap_x, 298, th["faint"], tracking=0.12))
-        s.append(T.text(word, "mono", 11, cap_x, 298, th["fg"], tracking=0.12, extra=' opacity="0"',
+        s.append(T.text(word, "mono", 11, cap_x, 352, th["faint"], tracking=0.12))
+        s.append(T.text(word, "mono", 11, cap_x, 352, th["fg"], tracking=0.12, extra=' opacity="0"',
                         child=anim("0;0;1;1;0;0", (0, a, a + 0.15, b - 0.1, b + 0.1, DUR))))
         cap_x += T.measure(word, "mono", 11, 0.12) + 18
-    return svg(W, H, "".join(s), "Amogh D. Prasanna: quantum compilation, error correction, generative QML. UMD and Fermilab SQMS. "
+    return svg(W, H, "".join(s), "Amogh D. Prasanna. Teaching noisy quantum hardware to compute correctly. "
                "An animated distance-5 rotated surface code: an error chain lights two syndromes, a decoder matches them, and the correction clears them.")
 
 

@@ -122,24 +122,28 @@ def project(cx, cy, R, x, y, z):
     return cx + R * u, cy - R * v, w * math.cos(EL) + z * math.sin(EL)
 
 
-def curve(cx, cy, R, f, front, back, n=120):
-    """A curve on (or in) the sphere, split into the part facing the viewer and the part behind."""
-    pts = [(k, *project(cx, cy, R, *f(k / n))) for k in range(n + 1)]
-    out = []
-    for side, style in ((1, front), (-1, back)):
-        if style is None:
-            continue
-        run, prev = [], None
-        for k, X, Y, D in pts + [(None, 0, 0, 0)]:
-            ok = k is not None and (D >= 0) == (side > 0)
-            if ok and (prev is None or k == prev + 1):
-                run.append(f"{X:.1f},{Y:.1f}")
-            else:
-                if len(run) > 1:
-                    out.append(f'<polyline points="{" ".join(run)}" fill="none" {style}/>')
-                run = [f"{X:.1f},{Y:.1f}"] if ok else []
-            prev = k if ok else None
-    return "".join(out)
+def great_circle(cx, cy, R, f, stroke, width=1.0):
+    front, back = [], []
+    for k in range(121):
+        t = 2 * math.pi * k / 120
+        X, Y, D = project(cx, cy, R, *f(t))
+        (front if D >= 0 else back).append((k, X, Y))
+
+    def runs(pts):
+        out, cur, prev = [], [], None
+        for k, X, Y in pts:
+            if prev is not None and k != prev + 1:
+                out.append(cur)
+                cur = []
+            cur.append(f"{X:.1f},{Y:.1f}")
+            prev = k
+        if cur:
+            out.append(cur)
+        return out
+
+    s = [f'<polyline points="{" ".join(r)}" fill="none" stroke="{stroke}" stroke-width="{width}"/>' for r in runs(front) if len(r) > 1]
+    s += [f'<polyline points="{" ".join(r)}" fill="none" stroke="{stroke}" stroke-width="{width}" stroke-dasharray="2 4"/>' for r in runs(back) if len(r) > 1]
+    return "".join(s)
 
 
 def slerp(p, q, t):
@@ -155,164 +159,40 @@ def slerp(p, q, t):
     return tuple(a * x + b * y for x, y in zip(p, q))
 
 
-# The sphere is drawn as a dark glass orb full of out-of-focus atoms, lit from the
-# upper right, after Oratomic's imagery. It stays dark in both themes, like a
-# photograph of an object; the Bloch geometry is drawn crisply over it.
-ORB = {"top": "#3b4547", "mid": "#141b1d", "low": "#07090a", "edge": "#020203",
-       "rim": "#8a7cff", "rim_dark": "#251f4a", "line": "#ffffff", "vec": "#f4f4f4", "angle": "#bfb4ff"}
-
-
-def orb_defs(R):
-    o = ORB
-    return (f'<defs><radialGradient id="orb" cx="0.70" cy="0.26" r="0.95">'
-            f'<stop offset="0" stop-color="{o["top"]}"/><stop offset="0.38" stop-color="{o["mid"]}"/>'
-            f'<stop offset="0.78" stop-color="{o["low"]}"/><stop offset="1" stop-color="{o["edge"]}"/></radialGradient>'
-            f'<radialGradient id="rim" cx="0.5" cy="0.5" r="0.5"><stop offset="0.84" stop-color="{o["rim"]}" stop-opacity="0"/>'
-            f'<stop offset="0.965" stop-color="{o["rim"]}" stop-opacity="0.16"/><stop offset="1" stop-color="{o["rim_dark"]}" stop-opacity="0.75"/></radialGradient>'
-            f'<radialGradient id="ray" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#ffffff" stop-opacity="0.55"/>'
-            f'<stop offset="1" stop-color="#ffffff" stop-opacity="0"/></radialGradient>'
-            f'<radialGradient id="shadow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#000000" stop-opacity="0.22"/>'
-            f'<stop offset="1" stop-color="#000000" stop-opacity="0"/></radialGradient>'
-            f'<filter id="b1" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="0.7"/></filter>'
-            f'<filter id="b2" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="2"/></filter>'
-            f'<filter id="bloom" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="{R * 0.12:.1f}"/></filter>'
-            f'<filter id="grain"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="1" seed="3"/>'
-            f'<feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.07 0"/></filter></defs>')
-
-
-def orb_body(cx, cy, R):
-    """Body, atoms, light. Fixed seed, so the orb looks the same on every move."""
-    rng = random.Random(11)
-    lx, ly = cx + 0.42 * R, cy - 0.46 * R
-    s = [f'<clipPath id="ball"><circle cx="{cx}" cy="{cy}" r="{R}"/></clipPath>',
-         f'<circle cx="{cx}" cy="{cy}" r="{R}" fill="url(#orb)"/>', '<g clip-path="url(#ball)">']
-    crisp, soft = [], []
-    for _ in range(280):
-        while True:
-            p = [rng.uniform(-1, 1) for _ in range(3)]
-            if sum(c * c for c in p) <= 0.96:
-                break
-        X, Y, D = project(cx, cy, R, *p)
-        near = math.exp(-math.hypot(X - lx, Y - ly) / (0.9 * R))
-        size = (0.8 + 4.6 * rng.random() ** 2.4) * (1 + 0.35 * D)
-        op = min(1.0, 0.3 + 0.7 * near) * (0.5 + 0.5 * rng.random())
-        tint = rng.choice(["#ffffff", "#ffffff", "#ffffff", "#dfe9ff", "#fff1e0"])
-        (soft if size > 2.4 else crisp).append(f'<circle cx="{X:.1f}" cy="{Y:.1f}" r="{size:.1f}" fill="{tint}" opacity="{op:.2f}"/>')
-    s.append(f'<g filter="url(#b2)" opacity="0.8">{"".join(soft)}</g><g filter="url(#b1)">{"".join(crisp)}</g>')
-    # starburst: thin tapered rays from the light, then the bloom itself
-    rays = []
-    for k in range(30):
-        a = 2 * math.pi * k / 30 + rng.uniform(-0.08, 0.08)
-        L = R * rng.uniform(0.35, 1.05)
-        w = rng.uniform(0.6, 1.8)
-        ex, ey = lx + L * math.cos(a), ly + L * math.sin(a)
-        nx, ny = -math.sin(a) * w, math.cos(a) * w
-        rays.append(f'<path d="M{lx + nx:.1f} {ly + ny:.1f}L{ex:.1f} {ey:.1f}L{lx - nx:.1f} {ly - ny:.1f}Z" opacity="{rng.uniform(0.08, 0.22):.2f}"/>')
-    s.append(f'<g fill="#ffffff">{"".join(rays)}</g>')
-    s.append(f'<circle cx="{lx:.1f}" cy="{ly:.1f}" r="{0.34 * R:.1f}" fill="url(#ray)"/>')
-    s.append(f'<circle cx="{lx:.1f}" cy="{ly:.1f}" r="{0.13 * R:.1f}" fill="#ffffff" opacity="0.9" filter="url(#bloom)"/>')
-    s.append(f'<circle cx="{lx:.1f}" cy="{ly:.1f}" r="{0.04 * R:.1f}" fill="#ffffff"/>')
-    s.append(f'<rect x="{cx - R}" y="{cy - R}" width="{2 * R}" height="{2 * R}" filter="url(#grain)"/>')
-    s.append("</g>")
-    return "".join(s)
-
-
-def sphere(th, psi, trail, cx=176, cy=166, R=112):
-    o = ORB
-    s = [orb_defs(R)]
-    if th["panel"] == THEMES["light"]["panel"]:
-        s.append(f'<ellipse cx="{cx}" cy="{cy + R + 9}" rx="{R * 0.8:.1f}" ry="{R * 0.11:.1f}" fill="url(#shadow)"/>')
-    s.append(orb_body(cx, cy, R))
-
-    behind = f'stroke="{o["line"]}" stroke-width="0.8" stroke-dasharray="1.5 3.5" opacity="0.16"'
-    tau = 2 * math.pi
-    # grid: meridians every 45 degrees, latitudes at 45 and 135
-    grid = []
-    for k in range(4):
-        ph = k * math.pi / 4
-        grid.append(lambda u, ph=ph: (math.cos(ph) * math.sin(tau * u), math.sin(ph) * math.sin(tau * u), math.cos(tau * u)))
-    for th_ in (math.pi / 4, 3 * math.pi / 4):
-        grid.append(lambda u, a=th_: (math.sin(a) * math.cos(tau * u), math.sin(a) * math.sin(tau * u), math.cos(a)))
-    equator = lambda u: (math.cos(tau * u), math.sin(tau * u), 0)  # noqa: E731
-    for f in grid + [equator]:
-        s.append(curve(cx, cy, R, f, None, behind))
-
-    # the equatorial plane, a faint disc
-    disc = " ".join(f"{X:.1f},{Y:.1f}" for X, Y, _ in (project(cx, cy, R, *equator(k / 96)) for k in range(97)))
-    s.append(f'<polygon points="{disc}" fill="{o["rim"]}" fill-opacity="0.07" stroke="none"/>')
-
-    # axes with arrowheads on the positive ends
+def sphere(th, psi, trail, cx=176, cy=170, R=112):
+    s = [f'<circle cx="{cx}" cy="{cy}" r="{R}" fill="none" stroke="{th["faint"]}" stroke-width="1.2"/>',
+         great_circle(cx, cy, R, lambda t: (math.cos(t), math.sin(t), 0), th["faint"]),
+         great_circle(cx, cy, R, lambda t: (math.cos(t), 0, math.sin(t)), th["line"])]
     for v in ((1, 0, 0), (0, 1, 0), (0, 0, 1)):
         x1, y1, _ = project(cx, cy, R, *[-c for c in v])
-        x2, y2, _ = project(cx, cy, R, *[1.12 * c for c in v])
-        s.append(f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" stroke="{o["line"]}" stroke-width="0.9" opacity="0.35"/>')
-        s.append(arrowhead(x1, y1, x2, y2, 7, 3, th["mute"]))
+        x2, y2, _ = project(cx, cy, R, *v)
+        s.append(f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" stroke="{th["line"]}"/>')
+    for lab, v, dx, dy, anchor in (("|0⟩", (0, 0, 1.16), 0, -2, "middle"), ("|1⟩", (0, 0, -1.16), 0, 12, "middle"),
+                                   ("|+⟩", (1.22, 0, 0), -2, 10, "end"), ("|+i⟩", (0, 1.14, 0), 4, 4, "start")):
+        X, Y, _ = project(cx, cy, R, *v)
+        s.append(S.text(lab, 12, X + dx, Y + dy, th["mute"], anchor=anchor))
 
     # where the state has been: a faint path over the surface
     pts = [tuple(p) for p in trail] + [bloch(psi)]
     for i in range(len(pts) - 1):
         seg = [project(cx, cy, R, *slerp(pts[i], pts[i + 1], k / 24))[:2] for k in range(25)]
-        op = 0.3 + 0.5 * (i + 1) / len(pts)
-        s.append(f'<polyline points="{" ".join(f"{X:.1f},{Y:.1f}" for X, Y in seg)}" fill="none" stroke="{o["angle"]}" '
+        op = 0.25 + 0.5 * (i + 1) / len(pts)
+        s.append(f'<polyline points="{" ".join(f"{X:.1f},{Y:.1f}" for X, Y in seg)}" fill="none" stroke="{th["accent"]}" '
                  f'stroke-width="1.2" stroke-dasharray="1 3" stroke-linecap="round" opacity="{op:.2f}"/>')
     for i, p in enumerate(pts[:-1]):
         X, Y, _ = project(cx, cy, R, *p)
-        s.append(f'<circle cx="{X:.1f}" cy="{Y:.1f}" r="2.2" fill="{o["angle"]}" opacity="{0.35 + 0.5 * (i + 1) / len(pts):.2f}"/>')
+        s.append(f'<circle cx="{X:.1f}" cy="{Y:.1f}" r="2.2" fill="{th["accent"]}" opacity="{0.3 + 0.5 * (i + 1) / len(pts):.2f}"/>')
 
-    # the state vector, its shadow on the equatorial plane, and the angles theta and phi
     x, y, z = bloch(psi)
     ex, ey, depth = project(cx, cy, R, x, y, z)
     px, py, _ = project(cx, cy, R, x, y, 0)
     if math.hypot(x, y) > 0.05:
-        s.append(f'<path d="M{cx} {cy}L{px:.1f} {py:.1f}L{ex:.1f} {ey:.1f}" fill="none" stroke="{o["line"]}" stroke-opacity="0.5" stroke-width="0.9" stroke-dasharray="3 3"/>')
-        s.append(f'<circle cx="{px:.1f}" cy="{py:.1f}" r="2" fill="{o["line"]}" opacity="0.6"/>')
-        phi = math.atan2(y, x)
-        s.append(curve(cx, cy, R, lambda u: (0.3 * math.cos(phi * u), 0.3 * math.sin(phi * u), 0),
-                       f'stroke="{o["angle"]}" stroke-width="1.1"', f'stroke="{o["angle"]}" stroke-width="1.1"', n=24))
-        lx, ly, _ = project(cx, cy, R, 0.44 * math.cos(phi / 2), 0.44 * math.sin(phi / 2), 0)
-        s.append(S.text("φ", 11, lx, ly + 4, o["angle"], anchor="middle"))
-    theta = math.acos(max(-1.0, min(1.0, z)))
-    if theta > 0.15:
-        unit = (x, y, z)
-        s.append(curve(cx, cy, R, lambda u: tuple(0.24 * c for c in slerp((0, 0, 1), unit, u)),
-                       f'stroke="{o["angle"]}" stroke-width="1.1"', f'stroke="{o["angle"]}" stroke-width="1.1"', n=24))
-        mid = slerp((0, 0, 1), unit, 0.5)
-        lx, ly, _ = project(cx, cy, R, *[0.37 * c for c in mid])
-        s.append(S.text("θ", 11, lx, ly + 4, o["angle"], anchor="middle"))
-    alpha = 1 if depth >= 0 else 0.6
-    # a dark keyline keeps the vector readable where it crosses the bright side of the orb
-    s.append(f'<line x1="{cx}" y1="{cy}" x2="{ex:.1f}" y2="{ey:.1f}" stroke="#000000" stroke-opacity="0.45" stroke-width="5" stroke-linecap="round"/>')
-    s.append(f'<line x1="{cx}" y1="{cy}" x2="{ex:.1f}" y2="{ey:.1f}" stroke="{o["vec"]}" stroke-width="2.3" stroke-linecap="round" opacity="{alpha}"/>')
-    s.append(f'<circle cx="{ex:.1f}" cy="{ey:.1f}" r="12" fill="{o["rim"]}" opacity="0.45" filter="url(#g)"/>')
-    s.append(arrowhead(cx, cy, ex, ey, 13, 5.5, o["vec"], alpha))
-    s.append(f'<circle cx="{cx}" cy="{cy}" r="2.6" fill="{o["vec"]}"/>')
-
-    # the near side of the grid, then the rim of the glass
-    front = f'stroke="{o["line"]}" stroke-width="0.8" opacity="0.26"'
-    for f in grid:
-        s.append(curve(cx, cy, R, f, front, None))
-    s.append(curve(cx, cy, R, equator, f'stroke="{o["line"]}" stroke-width="1" opacity="0.45"', None))
-    s.append(f'<circle cx="{cx}" cy="{cy}" r="{R}" fill="url(#rim)"/>')
-
-    # |+> points at the viewer, so its label sits on the orb and is drawn light
-    for lab, v, dx, dy, anchor, fill in (("|0⟩", (0, 0, 1.2), 0, -2, "middle", th["mute"]),
-                                         ("|1⟩", (0, 0, -1.16), 0, 16, "middle", th["mute"]),
-                                         ("|+⟩", (1.12, 0, 0), -8, 5, "end", "#d6d6d6"),
-                                         ("|+i⟩", (0, 1.2, 0), 6, 4, "start", th["mute"])):
-        X, Y, _ = project(cx, cy, R, *v)
-        s.append(S.text(lab, 12, X + dx, Y + dy, fill, anchor=anchor))
+        s.append(f'<path d="M{cx} {cy}L{px:.1f} {py:.1f}L{ex:.1f} {ey:.1f}" fill="none" stroke="{th["mute"]}" stroke-dasharray="3 3"/>')
+    s.append(f'<line x1="{cx}" y1="{cy}" x2="{ex:.1f}" y2="{ey:.1f}" stroke="{th["fg"]}" stroke-width="2.2" stroke-linecap="round"/>')
+    s.append(f'<circle cx="{ex:.1f}" cy="{ey:.1f}" r="11" fill="{th["accent"]}" opacity="0.35" filter="url(#g)"/>')
+    s.append(f'<circle cx="{ex:.1f}" cy="{ey:.1f}" r="5.2" fill="{th["fg"] if depth >= 0 else th["mute"]}"/>')
+    s.append(f'<circle cx="{cx}" cy="{cy}" r="2.4" fill="{th["mute"]}"/>')
     return "".join(s)
-
-
-def arrowhead(x1, y1, x2, y2, length, half, fill, opacity=1):
-    dx, dy = x2 - x1, y2 - y1
-    n = math.hypot(dx, dy)
-    if n < 1e-6:
-        return ""
-    ux, uy = dx / n, dy / n
-    bx, by = x2 - ux * length, y2 - uy * length
-    return (f'<path d="M{x2:.1f} {y2:.1f}L{bx - uy * half:.1f} {by + ux * half:.1f}L{bx + uy * half:.1f} {by - ux * half:.1f}Z" '
-            f'fill="{fill}" opacity="{opacity}"/>')
 
 
 def wire(th, ops, x0, y, x1):
