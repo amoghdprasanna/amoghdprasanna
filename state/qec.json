@@ -3,19 +3,20 @@
     12
   ],
   "z": [
-    13
+    13,
+    16
   ],
-  "moves": 10,
+  "moves": 11,
   "decodes": 3,
   "failures": 0,
   "last": {
-    "op": "X",
+    "op": "Z",
     "user": "amoghdprasanna",
     "at": "2026-10-11T21:00Z"
   },
   "result": null,
   "recent": {
-    "q": 12,
-    "kind": "x"
+    "q": 16,
+    "kind": "z"
   }
 }
