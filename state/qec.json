@@ -1,19 +1,13 @@
 {
   "x": [],
   "z": [],
-  "moves": 2,
+  "moves": 3,
   "decodes": 1,
   "failures": 0,
   "last": {
-    "op": "decode",
+    "op": "reset",
     "user": "amoghdprasanna",
     "at": "2026-10-11T20:48Z"
   },
-  "result": {
-    "cx": [
-      18
-    ],
-    "cz": [],
-    "logical": ""
-  }
+  "result": null
 }
