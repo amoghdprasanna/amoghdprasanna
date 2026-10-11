@@ -1,7 +1,8 @@
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/banner-dark.svg">
-  <img src="assets/banner-light.svg" alt="Amogh D. Prasanna. Teaching noisy quantum hardware to compute correctly. An animated distance-5 rotated surface code: an error chain lights two syndromes, a decoder matches them, and the correction clears them." width="100%">
-</picture>
+<!-- QEC:START -->
+<picture><source media="(prefers-color-scheme: dark)" srcset="assets/qec/banner-0-dark.svg"><img src="assets/qec/banner-0-light.svg" alt="Amogh D. Prasanna: quantum compilation, error correction, generative QML. UMD and Fermilab SQMS. A shared distance-5 rotated surface code, no errors. 0 decodes, 0 logical failures." width="100%"></picture>
+
+<p align="center"><a href="https://github.com/amoghdprasanna/amoghdprasanna/issues/new?title=qec%3A+X&body=Press+Submit.+A+bot+updates+the+surface+code+within+a+minute."><picture><source media="(prefers-color-scheme: dark)" srcset="assets/btn-qec-x-dark.svg"><img src="assets/btn-qec-x-light.svg" alt="Add an X error" height="34"></picture></a>&nbsp;<a href="https://github.com/amoghdprasanna/amoghdprasanna/issues/new?title=qec%3A+Z&body=Press+Submit.+A+bot+updates+the+surface+code+within+a+minute."><picture><source media="(prefers-color-scheme: dark)" srcset="assets/btn-qec-z-dark.svg"><img src="assets/btn-qec-z-light.svg" alt="Add a Z error" height="34"></picture></a>&nbsp;<a href="https://github.com/amoghdprasanna/amoghdprasanna/issues/new?title=qec%3A+decode&body=Press+Submit.+A+bot+updates+the+surface+code+within+a+minute."><picture><source media="(prefers-color-scheme: dark)" srcset="assets/btn-qec-decode-dark.svg"><img src="assets/btn-qec-decode-light.svg" alt="Decode" height="34"></picture></a>&nbsp;<a href="https://github.com/amoghdprasanna/amoghdprasanna/issues/new?title=qec%3A+reset&body=Press+Submit.+A+bot+updates+the+surface+code+within+a+minute."><picture><source media="(prefers-color-scheme: dark)" srcset="assets/btn-qec-reset-dark.svg"><img src="assets/btn-qec-reset-light.svg" alt="Reset the code" height="34"></picture></a></p>
+<!-- QEC:END -->
 
 I'm a graduate researcher at the University of Maryland, working with Prof. Shabnam Jabeen and, at Fermilab's SQMS center, Dr. Tanay Roy. I care about the gap between the circuit we write and what the hardware actually does.
 
@@ -65,4 +66,4 @@ Everyone who visits acts on the same qubit: what you apply, what the state becom
 
 <br>
 
-<sub>The banner is a distance-5 rotated surface code: two X errors light the syndromes at the ends of their chain, a decoder matches them, and the correction clears them. Everything on this page, including the qubit, is drawn by the code in this repository.</sub>
+<sub>The banner is a distance-5 rotated surface code shared by every visitor: add X or Z errors, watch the stabilizers that catch them light up, then decode and see whether the logical qubit survived. Everything on this page, including the qubit, is drawn by the code in this repository.</sub>

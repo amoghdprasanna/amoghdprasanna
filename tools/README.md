@@ -7,12 +7,13 @@ searchable and reflows on a phone.
 
 | Path | What it is | Made by |
 | --- | --- | --- |
-| `assets/banner-*.svg` | The animated tweezer array and title | `tools/build.py` |
+| `assets/qec/banner-N-*.svg` | The header: name and the shared d = 5 surface code | `scripts/qec.py`, on every move |
 | `assets/hdr-*.svg` | Section headers | `tools/build.py` |
-| `assets/btn-*.svg` | Link buttons | `tools/build.py` |
+| `assets/btn-*.svg` | Link buttons and the surface code's controls | `tools/build.py` |
 | `assets/gate-*.svg` | The qubit's gate buttons | `tools/build.py` |
 | `assets/qubit/card-N-*.svg` | The qubit's current state | `scripts/qubit.py`, on every move |
-| `scripts/glyphs.json` | Monospace glyph outlines the bot uses | `tools/build.py` |
+| `scripts/glyphs.json` | Monospace glyph outlines the bots use | `tools/build.py` |
+| `scripts/banner_text.json` | The header's name block, pasted in by `scripts/qec.py` | `tools/build.py` |
 
 Each image comes in a `-dark` and a `-light` version, and the README picks one
 with `<picture>` and `prefers-color-scheme`. Colours live in `scripts/theme.py`.
@@ -30,10 +31,18 @@ The fonts aren't committed. Put these in `tools/fonts/`:
 ([IBM Plex](https://github.com/IBM/plex)), `DejaVuSansMono.ttf` and `FreeSerif.ttf`
 (both fill in math glyphs like ⟩ that Plex lacks).
 
+## The surface code
+
+The header is a distance-5 rotated surface code that every visitor shares.
+`qec: X` and `qec: Z` put that error on a random data qubit, `qec: decode` applies
+the lowest-weight correction that matches the lit stabilizers (exhaustive search,
+so every one- and two-qubit error is corrected) and reports whether the logical
+qubit flipped, and `qec: reset` clears it. State lives in `state/qec.json`.
+
 ## The qubit
 
 `.github/workflows/qubit.yml` runs on every new issue whose title starts with
-`qubit:`. It applies the gate with `scripts/qubit.py`, which uses only the
+`qubit:` or `qec:`. For the qubit it applies the gate with `scripts/qubit.py`, which uses only the
 standard library, then commits the new state, card and README, replies on the
 issue and closes it. Each move writes a card under a new file name because
 GitHub caches README images for about five minutes and ignores query strings.

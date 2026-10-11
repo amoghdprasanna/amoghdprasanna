@@ -1,4 +1,4 @@
-name: shared-qubit
+name: shared-qubit-and-code
 
 on:
   issues:
@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   apply:
-    if: startsWith(github.event.issue.title, 'qubit:')
+    if: startsWith(github.event.issue.title, 'qubit:') || startsWith(github.event.issue.title, 'qec:')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -32,20 +32,21 @@ jobs:
           ACTOR: ${{ github.event.issue.user.login }}
           BRANCH: ${{ github.event.repository.default_branch }}
         run: |
+          case "$TITLE" in [Qq][Ee][Cc]:*) SCRIPT=scripts/qec.py; KIND=qec ;; *) SCRIPT=scripts/qubit.py; KIND=qubit ;; esac
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           for attempt in 1 2 3 4 5 6; do
             git fetch -q origin "$BRANCH"
             git reset -q --hard "origin/$BRANCH"
             : > "$GITHUB_OUTPUT.try"
-            GITHUB_OUTPUT="$GITHUB_OUTPUT.try" python scripts/qubit.py
+            GITHUB_OUTPUT="$GITHUB_OUTPUT.try" python "$SCRIPT"
             if ! grep -q '^changed=true' "$GITHUB_OUTPUT.try"; then
               cat "$GITHUB_OUTPUT.try" >> "$GITHUB_OUTPUT"
               exit 0
             fi
             OP=$(sed -n 's/^op=//p' "$GITHUB_OUTPUT.try")
             git add -A README.md state assets
-            git commit -q -m "qubit: $OP by @$ACTOR"
+            git commit -q -m "$KIND: $OP by @$ACTOR"
             if git push -q origin "HEAD:$BRANCH"; then
               cat "$GITHUB_OUTPUT.try" >> "$GITHUB_OUTPUT"
               exit 0
@@ -53,7 +54,7 @@ jobs:
             sleep $((attempt * 2 + RANDOM % 3))
           done
           echo "Could not push after 6 attempts" >&2
-          echo "The qubit was busy and this move could not be saved. Please try again in a minute." > msg.txt
+          echo "Too many moves landed at once and this one could not be saved. Please try again in a minute." > msg.txt
           exit 1
 
       - name: Reply and close

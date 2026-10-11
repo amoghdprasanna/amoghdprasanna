@@ -4,12 +4,12 @@
     python3 tools/build.py
 
 Needs the fonts listed in tools/typeset.py inside tools/fonts. Writes:
-    assets/banner-{dark,light}.svg      name and an animated d = 5 surface code
     assets/hdr-*-{dark,light}.svg       section headers
-    assets/btn-*-{dark,light}.svg       link buttons
+    assets/btn-*-{dark,light}.svg       link buttons and the surface code's controls
     assets/gate-*-{dark,light}.svg      the qubit's gate buttons
     scripts/glyphs.json                 mono glyph outlines for scripts/svgtext.py
-and then redraws the qubit card from state/qubit.json.
+    scripts/banner_text.json            the header's name block, for scripts/qec.py
+and then redraws the qubit card and the surface-code header from state/.
 """
 import json
 import math
@@ -29,143 +29,22 @@ def write(name, mode, body):
     (ASSETS / f"{name}-{mode}.svg").write_text(body)
 
 
-def fit(text, font, max_w, size, tracking=0.0):
-    while T.measure(text, font, size, tracking) > max_w:
-        size -= 0.5
-    return size
+# ---------------------------------------------------------------- banner text
 
+# The header itself is redrawn by scripts/qec.py on every move, since it shows the
+# live surface code. That script has only the mono glyph atlas, so the name block
+# on the left is drawn here once and stored as SVG fragments it pastes in.
 
-# ---------------------------------------------------------------- banner
-
-# A distance-5 rotated surface code, [[25, 1, 5]]: 25 data qubits, 24 stabilizers.
-# On a loop, two X errors appear, the Z stabilizers next to the ends of the chain
-# light up, a decoder matches the pair, and the correction clears them.
-W, H = 1280, 400
-D, P = 5, 44                 # code distance, pitch between data qubits
-CX, CY = 1040, 208           # centre of the patch
-DUR = 9.0
-ERR, SYN, MATCH, FIX, CALM = 1.0, 2.0, 3.4, 5.0, 6.2
-ERRORS = [(1, 2), (2, 2)]    # data qubits hit by X, as (column, row)
-
-TILES = {
-    "dark": {"x": "#16161b", "z": "#0b0b0d", "edge": "#26262b"},
-    "light": {"x": "#ebebf0", "z": "#f6f6f8", "edge": "#dcdce2"},
-}
-
-
-def q(i, j):
-    return CX + (i - (D - 1) / 2) * P, CY + (j - (D - 1) / 2) * P
-
-
-def stabilizers():
-    """(kind, data qubits, shape) for every stabilizer of the rotated code.
-
-    Bulk plaquette (a, b) is Z-type when a + b is even. Weight-2 X stabilizers sit
-    on the top and bottom edges and Z stabilizers on the left and right, placed
-    where they continue the checkerboard.
-    """
-    out = []
-    for a in range(D - 1):
-        for b in range(D - 1):
-            kind = "z" if (a + b) % 2 == 0 else "x"
-            out.append((kind, [(a, b), (a + 1, b), (a, b + 1), (a + 1, b + 1)], ("sq", a, b)))
-    for a in range(D - 1):
-        if (a - 1) % 2 == 1:
-            out.append(("x", [(a, 0), (a + 1, 0)], ("top", a, 0)))
-        if (a + D - 1) % 2 == 1:
-            out.append(("x", [(a, D - 1), (a + 1, D - 1)], ("bottom", a, D - 1)))
-    for b in range(D - 1):
-        if (b - 1) % 2 == 0:
-            out.append(("z", [(0, b), (0, b + 1)], ("left", 0, b)))
-        if (D - 1 + b) % 2 == 0:
-            out.append(("z", [(D - 1, b), (D - 1, b + 1)], ("right", D - 1, b)))
-    assert len(out) == D * D - 1
-    return out
-
-
-def shape(spec):
-    kind, i, j = spec
-    x, y = q(i, j)
-    r = P / 2
-    if kind == "sq":
-        return f"M{x} {y}h{P}v{P}h{-P}Z", (x + r, y + r)
-    if kind == "top":
-        return f"M{x} {y}A{r} {r} 0 0 1 {x + P} {y}Z", (x + r, y - r / 2)
-    if kind == "bottom":
-        return f"M{x} {y}A{r} {r} 0 0 0 {x + P} {y}Z", (x + r, y + r / 2)
-    if kind == "left":
-        return f"M{x} {y}A{r} {r} 0 0 0 {x} {y + P}Z", (x - r / 2, y + r)
-    return f"M{x} {y}A{r} {r} 0 0 1 {x} {y + P}Z", (x + r / 2, y + r)
-
-
-def kt(*ts):
-    return ";".join(f"{t / DUR:.4f}" for t in ts)
-
-
-def anim(values, times, attr="opacity"):
-    return f'<animate attributeName="{attr}" dur="{DUR}s" repeatCount="indefinite" values="{values}" keyTimes="{kt(*times)}"/>'
-
-
-def banner(mode):
-    th, tile = THEMES[mode], TILES[mode]
-    s = [f'<defs><filter id="glow" x="-150%" y="-150%" width="400%" height="400%"><feGaussianBlur stdDeviation="3"/></filter></defs>',
-         f'<rect x="0.5" y="0.5" width="{W - 1}" height="{H - 1}" rx="16" fill="{th["panel"]}" stroke="{th["edge"]}"/>']
-
-    # left column: who and what
-    s.append(f'<circle cx="68" cy="76" r="3.5" fill="{th["accent"]}"/>')
-    s.append(T.text("AMOGH D. PRASANNA", "mono", 13, 84, 80.5, th["mute"], tracking=0.14))
-    lines = ["Teaching noisy quantum", "hardware to compute", "correctly."]
-    size = min(fit(l, "inter-display-light", 640, 56, -0.01) for l in lines)
-    for i, l in enumerate(lines):
-        s.append(T.text(l, "inter-display-light", size, 62, 172 + i * size * 1.12, th["fg"], tracking=-0.01))
-    s.append(T.text("QUDIT COMPILATION / ERROR CORRECTION / QUANTUM GENERATIVE MODELS", "mono", 11.5, 64, 352, th["mute"], tracking=0.1))
-
-    # right column: the code patch
-    s.append(T.text("ROTATED SURFACE CODE  ·  d = 5  ·  [[25,1,5]]", "mono", 11, 1216, 80.5, th["mute"], anchor="end", tracking=0.1, cell=MONO_CELL))
-    stabs = stabilizers()
-    flipped = [st for st in stabs if st[0] == "z" and sum(d in ERRORS for d in st[1]) % 2 == 1]
-    assert len(flipped) == 2
-    for kind, _, spec in stabs:
-        d, _ = shape(spec)
-        s.append(f'<path d="{d}" fill="{tile[kind]}" stroke="{tile["edge"]}"/>')
-    # syndromes light up, then clear after the correction
-    for _, _, spec in flipped:
-        d, _ = shape(spec)
-        s.append(f'<path d="{d}" fill="{th["accent"]}" opacity="0">{anim("0;0;0.55;0.55;0;0", (0, SYN, SYN + 0.3, FIX + 0.4, FIX + 0.9, DUR))}</path>')
-    # the decoder's matching between the two lit syndromes
-    (x1, y1), (x2, y2) = (shape(f[2])[1] for f in flipped)
-    L = math.hypot(x2 - x1, y2 - y1)
-    s.append(f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" stroke="{th["accent"]}" stroke-width="1.6" '
-             f'stroke-linecap="round" stroke-dasharray="{L:.1f}" stroke-dashoffset="{L:.1f}" opacity="0">'
-             f'{anim(f"{L:.1f};{L:.1f};0;0", (0, MATCH, MATCH + 0.7, DUR), "stroke-dashoffset")}'
-             f'{anim("0;0;1;1;0;0", (0, MATCH, MATCH + 0.05, FIX + 0.6, FIX + 1.1, DUR))}</line>')
-    for (x, y) in ((x1, y1), (x2, y2)):
-        s.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="3" fill="{th["accent"]}" opacity="0">{anim("0;0;1;1;0;0", (0, SYN, SYN + 0.3, FIX + 0.4, FIX + 0.9, DUR))}</circle>')
-    # data qubits
-    for i in range(D):
-        for j in range(D):
-            x, y = q(i, j)
-            s.append(f'<circle cx="{x}" cy="{y}" r="7" fill="{th["fg"]}" opacity="{0.22 if mode == "dark" else 0.1}" filter="url(#glow)"/>'
-                     f'<circle cx="{x}" cy="{y}" r="3.6" fill="{th["fg"]}"/>')
-    for (i, j) in ERRORS:
-        x, y = q(i, j)
-        s.append(f'<circle cx="{x}" cy="{y}" r="9.5" fill="none" stroke="{th["accent"]}" stroke-width="1.5" opacity="0">'
-                 f'{anim("0;0;1;1;0;0", (0, ERR, ERR + 0.3, FIX, FIX + 0.35, DUR))}</circle>')
-        s.append(f'<circle cx="{x}" cy="{y}" r="3.6" fill="{th["accent"]}" opacity="0">{anim("0;0;1;1;0;0", (0, ERR, ERR + 0.3, FIX, FIX + 0.35, DUR))}</circle>')
-        # the correction: a brief flash as X is applied again
-        s.append(f'<circle cx="{x}" cy="{y}" r="12" fill="{th["fg"]}" opacity="0" filter="url(#glow)">{anim("0;0;0.8;0;0", (0, FIX, FIX + 0.15, FIX + 0.6, DUR))}</circle>')
-
-    # each step lit while it happens
-    steps = [("ERROR", ERR, SYN), ("SYNDROME", SYN, MATCH), ("MATCH", MATCH, FIX), ("CORRECT", FIX, CALM)]
-    total = sum(T.measure(w, "mono", 11, 0.12) for w, *_ in steps) + 18 * (len(steps) - 1)
-    cap_x = CX - total / 2
-    for word, a, b in steps:
-        s.append(T.text(word, "mono", 11, cap_x, 352, th["faint"], tracking=0.12))
-        s.append(T.text(word, "mono", 11, cap_x, 352, th["fg"], tracking=0.12, extra=' opacity="0"',
-                        child=anim("0;0;1;1;0;0", (0, a, a + 0.15, b - 0.1, b + 0.1, DUR))))
-        cap_x += T.measure(word, "mono", 11, 0.12) + 18
-    return svg(W, H, "".join(s), "Amogh D. Prasanna. Teaching noisy quantum hardware to compute correctly. "
-               "An animated distance-5 rotated surface code: an error chain lights two syndromes, a decoder matches them, and the correction clears them.")
+def banner_text(mode):
+    th = THEMES[mode]
+    handle = "amoghdprasanna"
+    return "".join([
+        T.text(handle, "mono", 13, 64, 104, th["mute"], tracking=0.06),
+        f'<circle cx="{64 + T.measure(handle, "mono", 13, 0.06) + 12:.1f}" cy="99.5" r="3" fill="{th["accent"]}"/>',
+        T.text("Amogh D. Prasanna", "inter-display-light", 54, 61, 180, th["fg"], tracking=-0.015),
+        T.text("quantum compilation · error correction · generative QML", "mono", 14, 64, 226, th["fg"], tracking=0.02),
+        T.text("UMD  /  FERMILAB SQMS", "mono", 11.5, 64, 264, th["mute"], tracking=0.14),
+    ])
 
 
 # ---------------------------------------------------------------- section headers
@@ -244,6 +123,7 @@ HEADERS = {
     "qubit": ("03", "A SHARED QUBIT"),
 }
 BUTTONS = {"website": "WEBSITE", "linkedin": "LINKEDIN", "email": "EMAIL"}
+QEC_BUTTONS = {"x": "X ERROR", "z": "Z ERROR", "decode": "DECODE", "reset": "RESET"}
 GATES = ["H", "X", "Y", "Z", "S", "T", "measure", "reset"]
 
 
@@ -251,15 +131,19 @@ def main():
     ASSETS.mkdir(exist_ok=True)
     atlas()
     for mode in THEMES:
-        write("banner", mode, banner(mode))
         for key, (num, title) in HEADERS.items():
             write(f"hdr-{key}", mode, header(mode, num, title))
         for key, label in BUTTONS.items():
             write(f"btn-{key}", mode, button(mode, label, arrow=key != "email"))
         for g in GATES:
             write(f"gate-{g.lower()}", mode, gate(mode, g))
+        for key, label in QEC_BUTTONS.items():
+            write(f"btn-qec-{key}", mode, button(mode, label, arrow=False))
+    (ROOT / "scripts" / "banner_text.json").write_text(json.dumps({m: banner_text(m) for m in THEMES}) + "\n")
+    import qec
     import qubit
     qubit.render(qubit.load())
+    qec.render(qec.load())
 
 
 if __name__ == "__main__":
