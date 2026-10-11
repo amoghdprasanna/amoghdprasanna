@@ -7,7 +7,7 @@ I'm a graduate researcher at the University of Maryland, working with Prof. Shab
 
 This page is not a résumé. It says why each repository here exists: the question, or the small annoyance, that made the code worth writing.
 
-<a href="https://amogh-d-prasanna.github.io/amogh-d-prasanna/"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/btn-website-dark.svg"><img src="assets/btn-website-light.svg" alt="Website" height="34"></picture></a>&nbsp;
+<a href="https://amoghdprasanna.github.io/"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/btn-website-dark.svg"><img src="assets/btn-website-light.svg" alt="Website" height="34"></picture></a>&nbsp;
 <a href="https://www.linkedin.com/in/amogh-d-p"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/btn-linkedin-dark.svg"><img src="assets/btn-linkedin-light.svg" alt="LinkedIn" height="34"></picture></a>&nbsp;
 <a href="mailto:amoghdp@umd.edu"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/btn-email-dark.svg"><img src="assets/btn-email-light.svg" alt="Email amoghdp@umd.edu" height="34"></picture></a>
 
