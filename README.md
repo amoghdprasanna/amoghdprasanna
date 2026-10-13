@@ -36,11 +36,6 @@ A team-built, on-device voice assistant for HVAC technicians. My part was the se
 
 A course project that takes a plain inventory app through misuse cases and STRIDE. 29 threats became 38 security requirements, and the code cites 27 of them by ID. The clearest change: a role-tampering threat moved roles out of client-held tokens and into server-side sessions that are reloaded on every request.
 
-**What does ATAK do with a unit that actually moves?**<br>
-<sub>[`ATAK-CDCL`](https://github.com/amoghdprasanna/ATAK-CDCL) &nbsp;·&nbsp; Java, Android TAK SDK</sub>
-
-TAK's stock CoT injector only scatters static markers. I added a simulated GPS unit that drives line, circle and square paths at a set speed and is sent through ATAK's internal dispatcher, so the map treats it like a real GPS-reported friendly unit and draws its trace.
-
 <br>
 
 <picture><source media="(prefers-color-scheme: dark)" srcset="assets/hdr-now-dark.svg"><img src="assets/hdr-now-light.svg" alt="02. Open questions" width="100%" height="44"></picture>
