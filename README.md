@@ -21,17 +21,17 @@ This page is not a résumé. It says why each repository here exists: the questi
 
 There is no first-principles calculation of hadronization, so event generators like Pythia fit a phenomenological Lund string model instead. I train quantum circuit Born machines on Pythia 8 momentum distributions and check what survives once IBM's noise model is switched on. The lesson so far is that on noisy hardware the budget is two-qubit gates, not depth: my best circuit under FakeBrisbane noise uses only 32 native ECR gates.
 
-**Can I ask about *this* equation without leaving the page?**<br>
+* **Can I ask about *this* equation without leaving the page?**<br>
 <sub>[`marginalia`](https://github.com/amoghdprasanna/marginalia) &nbsp;·&nbsp; Python, Qt, Claude API</sub>
 
 I read papers and watch lectures most of the day, and every question used to mean copying an equation into another window. marginalia floats over the screen: ask about whatever you're looking at, and markers fly to the symbols the answer is about. The hard part was making them land on the right pixels. It resizes each screenshot itself, so the model's coordinates map one to one onto the image it saw and back to the screen, then snaps each point onto the OCR line it names. Every question is saved to a dated journal of doubts.
 
-**What does a veteran technician know that the manual doesn't?**<br>
+* **What does a veteran technician know that the manual doesn't?**<br>
 <sub>[`HVAC Copilot`](https://github.com/Rayhanpatel/Ycombinator-Cactus-Deepmind) &nbsp;·&nbsp; YC × Cactus × DeepMind hackathon, team project &nbsp;·&nbsp; on-device Gemma</sub>
 
 A team-built, on-device voice assistant for HVAC technicians. My part was the search behind it: when the manual's answer doesn't fix the unit, look further, into forums. I wrote a ranker, unit-tested but not yet wired into the app, that lets a certified tech's deeply nested reply outrank the official support page by weighing author expertise, reply depth and "this fixed mine" replies against source authority.
 
-**What does a threat model actually change in the code?**<br>
+* **What does a threat model actually change in the code?**<br>
 <sub>[`Threat-Model-Dunder-Mifflin`](https://github.com/amoghdprasanna/Threat-Model-Dunder-Mifflin) &nbsp;·&nbsp; UMD ENPM680 &nbsp;·&nbsp; Go, Fiber, PostgreSQL</sub>
 
 A course project that takes a plain inventory app through misuse cases and STRIDE. 29 threats became 38 security requirements, and the code cites 27 of them by ID. The clearest change: a role-tampering threat moved roles out of client-held tokens and into server-side sessions that are reloaded on every request.
@@ -40,7 +40,7 @@ A course project that takes a plain inventory app through misuse cases and STRID
 
 <picture><source media="(prefers-color-scheme: dark)" srcset="assets/hdr-now-dark.svg"><img src="assets/hdr-now-light.svg" alt="02. Open questions" width="100%" height="44"></picture>
 
-**Can a learned compiler beat analytic decompositions on a qudit?** With Dr. Tanay Roy (Fermilab SQMS) I'm training models that compile arbitrary SU(*d*) unitaries into native gate sequences for superconducting transmon qudits, with leakage and anharmonicity built into the objective rather than patched on afterwards.
+* **Can a learned compiler beat analytic decompositions on a qudit?** With Dr. Tanay Roy (Fermilab SQMS) I'm training models that compile arbitrary SU(*d*) unitaries into native gate sequences for superconducting transmon qudits, with leakage and anharmonicity built into the objective rather than patched on afterwards.
 
 **Decoding topological codes.** I'm contributing to an open-source toolkit, in Python and C++, for simulating and decoding them.
 
