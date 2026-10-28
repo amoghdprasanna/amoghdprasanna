@@ -49,7 +49,7 @@ def banner_text(mode, phone=False):
             f'<circle cx="{64 + T.measure(handle, "mono", 15, 0.06) + 13:.1f}" cy="98.5" r="3.5" fill="{th["accent"]}"/>',
             T.text("Amogh D. Prasanna", "inter-display-light", 58, 61, 184, th["fg"], tracking=-0.015),
             T.text("quantum compilation · error correction · quantum simulation", "mono", 19, 64, 234, th["fg"], tracking=0.01),
-            T.text("UMD, COLLEGE PARK", "mono", 15, 64, 276, th["mute"], tracking=0.14),
+            T.text("UMD, College Park", "mono", 15, 64, 276, th["mute"], tracking=0.14),
         ])
     # a tall layout for phones: everything bigger, one topic per line
     size = fit("Amogh D. Prasanna", "inter-display-light", 612, 80, -0.015)
@@ -58,7 +58,7 @@ def banner_text(mode, phone=False):
          T.text("Amogh D. Prasanna", "inter-display-light", size, 51, 186, th["fg"], tracking=-0.015)]
     for i, topic in enumerate(["quantum compilation", "error correction", "quantum simulation"]):
         s.append(T.text(topic, "mono", 28, 54, 252 + i * 42, th["fg"], tracking=0.01))
-    s.append(T.text("UMD, COLLEGE PARK", "mono", 22, 54, 398, th["mute"], tracking=0.14))
+    s.append(T.text("UMD, College Park", "mono", 22, 54, 398, th["mute"], tracking=0.14))
     return "".join(s)
 
 
