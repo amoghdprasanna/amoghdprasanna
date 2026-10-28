@@ -31,10 +31,10 @@ I read papers and watch lectures most of the day, and every question used to mea
 
 A team-built, on-device voice assistant for HVAC technicians. My part was the search behind it: when the manual's answer doesn't fix the unit, look further, into forums. I wrote a ranker, unit-tested but not yet wired into the app, that lets a certified tech's deeply nested reply outrank the official support page by weighing author expertise, reply depth and "this fixed mine" replies against source authority.
 
-* **What does a threat model actually change in the code?**<br>
-<sub>[`Threat-Model-Dunder-Mifflin`](https://github.com/amoghdprasanna/Threat-Model-Dunder-Mifflin) &nbsp;·&nbsp; UMD ENPM680 &nbsp;·&nbsp; Go, Fiber, PostgreSQL</sub>
+* **Can a tool fix my LaTeX without writing my paper?**<br>
+<sub>[`Lemma`](https://github.com/amoghdprasanna/Lemma) &nbsp;·&nbsp; Chrome extension for Overleaf &nbsp;·&nbsp; TypeScript, React, Gemini Nano</sub>
 
-A course project that takes a plain inventory app through misuse cases and STRIDE. 29 threats became 38 security requirements, and the code cites 27 of them by ID. The clearest change: a role-tampering threat moved roles out of client-held tokens and into server-side sessions that are reloaded on every request.
+A compiler catches what breaks the build, not an equation cited with `\ref`, a ket style that changes halfway through, or an acronym used before it's defined. Lemma reads the paper open in Overleaf and runs 29 checks on structure, LaTeX, quantum-information notation and citations, each with a plain-language reason and a card that says whether it's a rule or a style choice. The line it holds is that it never writes the paper: fixes are mechanical only, previewed as a diff and reversed by one Overleaf undo, and a guard in the code rejects anything else. It all runs in the browser, with Chrome's on-device Gemini Nano as an optional explainer, so the draft never leaves the machine.
 
 <br>
 
