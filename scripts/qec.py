@@ -373,7 +373,7 @@ def alt(d):
         state = "just decoded, " + ("logical qubit intact" if not res["logical"] else f"logical {res['logical']} flipped")
     else:
         state = "no errors"
-    return (f"Amogh D. Prasanna: quantum compilation, error correction, quantum simulation. UMD and Fermilab SQMS. "
+    return (f"Amogh D. Prasanna: quantum compilation, error correction, quantum simulation. UMD, College Park. "
             f"A shared distance-5 rotated surface code, {state}. {d['decodes']} decodes, {d['failures']} logical failures.")
 
 
